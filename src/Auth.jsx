@@ -32,29 +32,23 @@ export function LoginScreen() {
     });
   };
 
-  const T = {
-    bg: "#F7F6F2", card: "#FFFFFF", border: "#E8E5DE",
-    text: "#1A1917", text2: "#6B6860", text3: "#A8A49D",
-    accent: "#1A1917", accentText: "#FFFFFF", radius: 14,
-  };
-
   return (
-    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", minHeight: "100svh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "2.5rem 2rem", maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}>
-        <div style={{ fontSize: 40, marginBottom: "0.75rem" }}>✨</div>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px", color: T.text, letterSpacing: "-0.5px" }}>Split Sin Drama</h1>
-        <p style={{ fontSize: 13, color: T.text3, margin: "0 0 2rem" }}>Sube la boleta · IA extrae todo · divide sin pelea</p>
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", minHeight: "100svh", background: "#0A0A0A", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+      <div style={{ background: "#141414", border: "1px solid #222", borderRadius: 16, padding: "2.75rem 2rem", maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: "#1E1E1E", border: "1px solid #2A2A2A", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, margin: "0 auto 1.25rem" }}>✨</div>
+        <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px", color: "#F0F0F0", letterSpacing: "-0.6px" }}>Split Sin Drama</h1>
+        <p style={{ fontSize: 13, color: "#555", margin: "0 0 2rem", lineHeight: 1.5 }}>Sube la boleta · IA extrae todo · divide sin pelea</p>
 
         <button
           onClick={loginWithGoogle}
           disabled={loading}
-          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "11px 16px", border: `1px solid ${T.border}`, borderRadius: 8, background: T.card, cursor: loading ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 600, color: T.text, fontFamily: "inherit", opacity: loading ? 0.6 : 1, transition: "all 0.15s" }}>
+          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "12px 16px", border: "none", borderRadius: 10, background: "#2563FF", cursor: loading ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 700, color: "#fff", fontFamily: "inherit", opacity: loading ? 0.5 : 1, transition: "all 0.2s", boxShadow: "0 0 20px rgba(37,99,255,0.4)" }}>
           <GoogleIcon />
           {loading ? "Redirigiendo..." : "Continuar con Google"}
         </button>
 
-        <p style={{ fontSize: 11, color: T.text3, marginTop: "1.5rem", lineHeight: 1.5 }}>
-          5 escaneos gratis · sin tarjeta de crédito
+        <p style={{ fontSize: 11, color: "#444", marginTop: "1.5rem", lineHeight: 1.6 }}>
+          3 escaneos gratis · sin tarjeta de crédito
         </p>
       </div>
     </div>

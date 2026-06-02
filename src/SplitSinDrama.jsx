@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 const STEPS = ["Cuenta", "Ajustes", "Personas", "Marcar", "Resultado"];
 const fmtCLP = (n) => "$" + Math.round(n).toLocaleString("es-CL");
 const COLORS = ["#E07B5A","#5A8FE0","#5ABF8A","#B05AE0","#E0BC5A","#5ADCE0","#E05A8F","#8FE05A","#E05A5A","#5A6BE0"];
-const SCAN_LIMIT = 5;
+const SCAN_LIMIT = 3;
 
 export default function SplitSinDrama({ user }) {
   const [step, setStep] = useState(0);
@@ -126,39 +126,39 @@ export default function SplitSinDrama({ user }) {
   };
 
   const T = {
-    bg: "#F7F6F2", card: "#FFFFFF", border: "#E8E5DE", border2: "#D0CCC2",
-    text: "#1A1917", text2: "#6B6860", text3: "#A8A49D",
-    accent: "#1A1917", accentText: "#FFFFFF",
-    green: "#2A6B1A", greenBg: "#EDF5E8", greenBorder: "#B8D9A8",
-    red: "#C0392B", orange: "#C46A00", orangeBg: "#FFF3E0",
+    bg: "#0A0A0A", card: "#141414", border: "#222222", border2: "#2A2A2A",
+    text: "#F0F0F0", text2: "#888888", text3: "#555555",
+    accent: "#F0F0F0", accentText: "#0A0A0A",
+    green: "#4ADE80", greenBg: "#0D2318", greenBorder: "#1A4030",
+    red: "#F87171", orange: "#FB923C", orangeBg: "#1A1000",
     radius: 14, radiusSm: 8,
   };
 
   const s = {
-    app: { fontFamily: "'Inter', 'DM Sans', system-ui, sans-serif", maxWidth: 640, margin: "0 auto", padding: "1.25rem 1rem 3rem", background: "transparent" },
-    h1: { fontSize: 24, fontWeight: 700, letterSpacing: "-0.6px", margin: 0, color: T.text },
-    sub: { fontSize: 12, color: T.text3, marginTop: 3 },
-    stepBar: { display: "flex", gap: 4, margin: "1.25rem 0" },
-    stepBtn: (i) => ({ flex: 1, padding: "7px 3px", border: `1px solid ${i === step ? T.accent : i < step ? T.greenBorder : T.border}`, borderRadius: 8, fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.3px", textTransform: "uppercase", transition: "all 0.15s", background: i === step ? T.accent : i < step ? T.greenBg : T.bg, color: i === step ? T.accentText : i < step ? T.green : T.text3 }),
-    card: { background: T.card, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "1.1rem 1.25rem", marginBottom: "0.85rem", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" },
-    label: { fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: T.text3, marginBottom: 8 },
-    input: { width: "100%", padding: "9px 11px", border: `1px solid ${T.border2}`, borderRadius: T.radiusSm, fontFamily: "inherit", fontSize: 13, outline: "none", background: "#FAFAF8", color: T.text, boxSizing: "border-box" },
-    btnDark: { background: T.accent, color: T.accentText, border: "none", borderRadius: T.radiusSm, padding: "9px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 },
-    btnLight: { background: "none", color: T.text2, border: `1px solid ${T.border2}`, borderRadius: T.radiusSm, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" },
+    app: { fontFamily: "'Inter', 'DM Sans', system-ui, sans-serif", maxWidth: 640, margin: "0 auto", padding: "1.5rem 1rem 4rem", background: "transparent" },
+    h1: { fontSize: 26, fontWeight: 700, letterSpacing: "-0.8px", margin: 0, color: T.text },
+    sub: { fontSize: 12, color: T.text3, marginTop: 4, letterSpacing: "0.2px" },
+    stepBar: { display: "flex", gap: 3, margin: "1.5rem 0" },
+    stepBtn: (i) => ({ flex: 1, padding: "8px 3px", border: `1px solid ${i === step ? "#2563FF" : i < step ? T.greenBorder : T.border}`, borderRadius: 8, fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.4px", textTransform: "uppercase", transition: "all 0.2s", background: i === step ? "#0D1F4E" : i < step ? T.greenBg : "#111111", color: i === step ? "#2563FF" : i < step ? T.green : T.text3, boxShadow: i === step ? "0 0 10px rgba(37,99,255,0.2)" : "none" }),
+    card: { background: T.card, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "1.25rem 1.25rem", marginBottom: "0.75rem", boxShadow: "0 4px 24px rgba(0,0,0,0.4)" },
+    label: { fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.6px", color: T.text3, marginBottom: 10 },
+    input: { width: "100%", padding: "10px 12px", border: `1px solid ${T.border2}`, borderRadius: T.radiusSm, fontFamily: "inherit", fontSize: 13, outline: "none", background: "#1A1A1A", color: T.text, boxSizing: "border-box" },
+    btnDark: { background: "#2563FF", color: "#FFFFFF", border: "none", borderRadius: T.radiusSm, padding: "10px 20px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 700, letterSpacing: "-0.2px", boxShadow: "0 0 16px rgba(37,99,255,0.4)" },
+    btnLight: { background: "none", color: T.text2, border: `1px solid ${T.border2}`, borderRadius: T.radiusSm, padding: "10px 16px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" },
     btnGhost: { background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 },
     navRow: { display: "flex", gap: 8, marginTop: "1rem" },
-    dropzone: (over) => ({ border: `2px dashed ${over ? T.accent : T.border2}`, borderRadius: T.radius, padding: "2.5rem 1rem", textAlign: "center", cursor: "pointer", transition: "all 0.15s", background: over ? "#F0EFE9" : T.bg }),
-    tag: (color) => ({ display: "inline-flex", alignItems: "center", gap: 5, background: color + "15", border: `1px solid ${color}35`, borderRadius: 20, padding: "5px 10px 5px 7px", fontSize: 13, color: T.text }),
-    xBtn: (marked) => ({ width: 32, height: 32, borderRadius: 8, border: `1.5px solid ${marked ? T.accent : T.border2}`, background: marked ? T.accent : "none", color: marked ? T.accentText : T.text3, cursor: "pointer", fontFamily: "inherit", fontSize: 15, fontWeight: 700, transition: "all 0.12s" }),
-    prow: { display: "flex", justifyContent: "space-between", fontSize: 13, padding: "3px 0", color: T.text2 },
-    prowFinal: { display: "flex", justifyContent: "space-between", fontSize: 16, padding: "10px 0 3px", color: T.text, fontWeight: 700, borderTop: `1px solid ${T.border}`, marginTop: 6 },
-    totalsBox: { background: T.bg, borderRadius: T.radiusSm, padding: "0.85rem 1rem", marginTop: "0.85rem" },
+    dropzone: (over) => ({ border: `1.5px dashed ${over ? "#F0F0F0" : T.border2}`, borderRadius: T.radius, padding: "2.75rem 1rem", textAlign: "center", cursor: "pointer", transition: "all 0.2s", background: over ? "#1A1A1A" : "#0F0F0F" }),
+    tag: (color) => ({ display: "inline-flex", alignItems: "center", gap: 5, background: color + "18", border: `1px solid ${color}30`, borderRadius: 20, padding: "5px 10px 5px 7px", fontSize: 13, color: T.text }),
+    xBtn: (marked) => ({ width: 34, height: 34, borderRadius: 8, border: `1.5px solid ${marked ? "#2563FF" : T.border2}`, background: marked ? "#2563FF" : "none", color: marked ? "#fff" : T.text3, cursor: "pointer", fontFamily: "inherit", fontSize: 15, fontWeight: 700, transition: "all 0.15s", boxShadow: marked ? "0 0 10px rgba(37,99,255,0.4)" : "none" }),
+    prow: { display: "flex", justifyContent: "space-between", fontSize: 13, padding: "4px 0", color: T.text2 },
+    prowFinal: { display: "flex", justifyContent: "space-between", fontSize: 16, padding: "12px 0 3px", color: T.text, fontWeight: 700, borderTop: `1px solid ${T.border}`, marginTop: 8 },
+    totalsBox: { background: "#0F0F0F", borderRadius: T.radiusSm, padding: "1rem 1rem", marginTop: "1rem", border: `1px solid ${T.border}` },
     saveBadge: { background: T.greenBg, color: T.green, borderRadius: 6, fontSize: 11, padding: "2px 7px", marginLeft: 7, fontWeight: 600 },
-    detailRow: { display: "flex", justifyContent: "space-between", fontSize: 12, color: T.text2, padding: "2px 0" },
-    detailSub: { display: "flex", justifyContent: "space-between", fontSize: 13, color: T.text, padding: "6px 0 2px", borderTop: `1px solid ${T.border}`, marginTop: 4 },
-    avatar: (c) => ({ width: 38, height: 38, borderRadius: "50%", background: c + "20", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: c, flexShrink: 0, border: `2px solid ${c}35` }),
-    th: { textAlign: "left", fontWeight: 600, fontSize: 10, color: T.text3, padding: "6px 8px", borderBottom: `1px solid ${T.border}`, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.4px" },
-    td: { padding: "7px 8px", borderBottom: `1px solid ${T.bg}`, verticalAlign: "middle" },
+    detailRow: { display: "flex", justifyContent: "space-between", fontSize: 12, color: T.text2, padding: "3px 0" },
+    detailSub: { display: "flex", justifyContent: "space-between", fontSize: 13, color: T.text, padding: "8px 0 3px", borderTop: `1px solid ${T.border}`, marginTop: 6 },
+    avatar: (c) => ({ width: 40, height: 40, borderRadius: "50%", background: c + "18", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: c, flexShrink: 0, border: `1.5px solid ${c}30` }),
+    th: { textAlign: "left", fontWeight: 600, fontSize: 10, color: T.text3, padding: "6px 8px", borderBottom: `1px solid ${T.border}`, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.5px" },
+    td: { padding: "8px 8px", borderBottom: `1px solid ${T.border}`, verticalAlign: "middle" },
   };
 
   const scansLeft = SCAN_LIMIT - scanCount;
@@ -399,10 +399,17 @@ export default function SplitSinDrama({ user }) {
 
   return (
     <div style={s.app}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} *{box-sizing:border-box}`}</style>
-      <div style={{ textAlign: "center", marginBottom: "0.25rem" }}>
-        <h1 style={s.h1}>✨ Split Sin Drama</h1>
-        <p style={s.sub}>Sube la boleta · IA extrae todo · divide sin pelea</p>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} *{box-sizing:border-box} input[type=number]::-webkit-inner-spin-button{opacity:0.3}`}</style>
+      <div style={{ marginBottom: "0.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h1 style={s.h1}>Split Sin Drama</h1>
+            <p style={s.sub}>Sube la boleta · IA extrae todo · divide sin pelea</p>
+          </div>
+          <button onClick={() => supabase.auth.signOut()} style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: 8, padding: "6px 12px", fontSize: 11, color: T.text3, cursor: "pointer", fontFamily: "inherit" }}>
+            Salir
+          </button>
+        </div>
       </div>
       <div style={s.stepBar}>{STEPS.map((name, i) => <button key={name} style={s.stepBtn(i)} onClick={() => setStep(i)}>{name}</button>)}</div>
       {panels[step]()}
