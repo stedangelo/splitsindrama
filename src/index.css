@@ -1,0 +1,13 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #F7F6F2;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100%;
+}
