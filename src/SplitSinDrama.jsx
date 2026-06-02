@@ -127,7 +127,7 @@ export default function SplitSinDrama({ user }) {
 
   const T = {
     bg: "#0A0A0A", card: "#141414", border: "#222222", border2: "#2A2A2A",
-    text: "#F0F0F0", text2: "#888888", text3: "#555555",
+    text: "#FFFFFF", text2: "#AAAAAA", text3: "#666666",
     accent: "#F0F0F0", accentText: "#0A0A0A",
     green: "#4ADE80", greenBg: "#0D2318", greenBorder: "#1A4030",
     red: "#F87171", orange: "#FB923C", orangeBg: "#1A1000",
