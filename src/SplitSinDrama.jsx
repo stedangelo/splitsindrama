@@ -1,11 +1,14 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { supabase } from "./supabase";
 
 const STEPS = ["Cuenta", "Ajustes", "Personas", "Marcar", "Resultado"];
 const fmtCLP = (n) => "$" + Math.round(n).toLocaleString("es-CL");
 const COLORS = ["#E07B5A","#5A8FE0","#5ABF8A","#B05AE0","#E0BC5A","#5ADCE0","#E05A8F","#8FE05A","#E05A5A","#5A6BE0"];
+const SCAN_LIMIT = 5;
 
-export default function SplitSinDrama() {
+export default function SplitSinDrama({ user }) {
   const [step, setStep] = useState(0);
+  const [scanCount, setScanCount] = useState(0);
   const [items, setItems] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editVal, setEditVal] = useState({ name: "", price: "" });
@@ -23,10 +26,21 @@ export default function SplitSinDrama() {
   const [scanDone, setScanDone] = useState(false);
   const fileRef = useRef();
 
+  useEffect(() => {
+    supabase
+      .from("scans")
+      .select("id", { count: "exact" })
+      .eq("user_id", user.id)
+      .then(({ count }) => setScanCount(count || 0));
+  }, [user.id]);
+
   const analyzeImage = useCallback(async (base64, mimeType) => {
+    if (scanCount >= SCAN_LIMIT) return;
     setAiLoading(true);
     setScanDone(false);
     try {
+      await supabase.from("scans").insert({ user_id: user.id });
+      setScanCount(c => c + 1);
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -60,7 +74,7 @@ export default function SplitSinDrama() {
       }
     } catch (e) { console.error(e); }
     setAiLoading(false);
-  }, []);
+  }, [scanCount, user.id]);
 
   const processFile = useCallback((file) => {
     if (!file || !file.type.startsWith("image/")) return;
@@ -72,7 +86,7 @@ export default function SplitSinDrama() {
       analyzeImage(e.target.result.split(",")[1], file.type);
     };
     reader.readAsDataURL(file);
-  }, [analyzeImage]);
+  }, [analyzeImage, scanCount]);
 
   const startEdit = (it) => { setEditingId(it.id); setEditVal({ name: it.name, price: it.price }); };
   const saveEdit = () => {
@@ -147,19 +161,27 @@ export default function SplitSinDrama() {
     td: { padding: "7px 8px", borderBottom: `1px solid ${T.bg}`, verticalAlign: "middle" },
   };
 
+  const scansLeft = SCAN_LIMIT - scanCount;
+  const limitReached = scansLeft <= 0;
+
   const renderStep0 = () => (
     <div>
       <div style={s.card}>
-        <div style={s.label}>📷 Foto de la boleta</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <div style={s.label}>📷 Foto de la boleta</div>
+          <div style={{ fontSize: 11, color: limitReached ? T.red : scansLeft <= 2 ? T.orange : T.text3, fontWeight: 600 }}>
+            {limitReached ? "Límite alcanzado" : `${scansLeft} escaneo${scansLeft !== 1 ? "s" : ""} gratis restante${scansLeft !== 1 ? "s" : ""}`}
+          </div>
+        </div>
         {!imgPreview ? (
-          <div style={s.dropzone(dragOver)}
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          <div style={{ ...s.dropzone(dragOver && !limitReached), opacity: limitReached ? 0.5 : 1, cursor: limitReached ? "not-allowed" : "pointer" }}
+            onDragOver={e => { if (!limitReached) { e.preventDefault(); setDragOver(true); } }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={e => { e.preventDefault(); setDragOver(false); processFile(e.dataTransfer.files[0]); }}
-            onClick={() => fileRef.current.click()}>
+            onDrop={e => { e.preventDefault(); setDragOver(false); if (!limitReached) processFile(e.dataTransfer.files[0]); }}
+            onClick={() => !limitReached && fileRef.current.click()}>
             <div style={{ fontSize: 40, marginBottom: 10 }}>🧾</div>
-            <p style={{ fontSize: 14, color: T.text2, margin: 0, fontWeight: 500 }}>Sube la foto de la cuenta</p>
-            <p style={{ fontSize: 12, color: T.text3, marginTop: 5, marginBottom: 0 }}>La IA detecta items, propina y descuento</p>
+            <p style={{ fontSize: 14, color: T.text2, margin: 0, fontWeight: 500 }}>{limitReached ? "Alcanzaste el límite de 5 escaneos gratis" : "Sube la foto de la cuenta"}</p>
+            <p style={{ fontSize: 12, color: T.text3, marginTop: 5, marginBottom: 0 }}>{limitReached ? "Próximamente plan premium" : "La IA detecta items, propina y descuento"}</p>
           </div>
         ) : (
           <div style={{ position: "relative", marginBottom: "0.75rem" }}>
