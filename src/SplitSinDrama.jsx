@@ -51,12 +51,23 @@ export default function SplitSinDrama({ user }) {
             role: "user",
             content: [
               { type: "image", source: { type: "base64", media_type: mimeType, data: base64 } },
-              { type: "text", text: `Analiza esta boleta/cuenta de restaurante o bar chileno. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks:
+              { type: "text", text: `Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
+
+Formato exacto:
 {"items":[{"name":"nombre","qty":1,"price":5990}],"propina":10,"descuento":0,"descMode":"total"}
-- items: solo platos y bebidas (sin propina, sin descuentos, sin totales). price = precio total del item, número entero sin puntos ni comas.
-- propina: porcentaje detectado (número, 0 si no hay).
-- descuento: porcentaje detectado (número, 0 si no hay).
-- descMode: "subtotal" si la propina se calcula sobre el monto ORIGINAL antes del descuento; "total" si el descuento aplica sobre todo o no hay descuento.` }
+
+Reglas para items:
+- Incluye solo productos consumibles: platos, bebidas, postres, agregados.
+- EXCLUYE: líneas de propina, descuentos, subtotales, totales, líneas en $0 (cortesías o items sin precio).
+- price = precio TOTAL de la línea (cantidad × precio unitario), número entero sin puntos ni comas.
+- qty = cantidad indicada en la boleta (número entero). Si dice "x2" o "2x" en el nombre, extrae la cantidad al campo qty y limpia el nombre.
+- Si el mismo producto aparece en múltiples líneas (ej. "Taza de té" x3 veces), inclúyelas como items SEPARADOS con sus respectivos precios — no las agrupes.
+- Nombres: limpia prefijos como "JM:" o "Agr." pero mantén el nombre descriptivo (ej. "JM: Fun Facts" → "Fun Facts", "Agr. Salsa Ludum" → "Salsa Ludum").
+
+Reglas para propina/descuento:
+- propina: porcentaje numérico (ej. 10 para 10%). 0 si no hay.
+- descuento: porcentaje numérico. 0 si no hay.
+- descMode: "subtotal" si la propina se calcula sobre el monto original antes del descuento; "total" si el descuento aplica sobre el total con propina o no hay descuento.` }
             ]
           }]
         })
