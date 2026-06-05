@@ -156,13 +156,12 @@ export default function SplitSinDrama({ user }) {
     setScanDone(false);
     try {
       const worker = await createWorker("spa+eng", 1, {
+        workerPath: "https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/worker.min.js",
+        langPath: "https://tessdata.projectnaptha.com/4.0.0",
+        corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@6/tesseract-core-simd-lstm.wasm",
         logger: () => {},
       });
-      // Crear img element que Tesseract puede leer directamente
-      const img = document.createElement("img");
-      img.src = dataUrl;
-      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-      const { data: { text } } = await worker.recognize(img);
+      const { data: { text } } = await worker.recognize(dataUrl);
       await worker.terminate();
 
       console.log("OCR texto completo:\n", text); // para debug
