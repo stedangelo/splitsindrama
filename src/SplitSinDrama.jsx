@@ -113,43 +113,25 @@ export default function SplitSinDrama({ user }) {
     setAiLoading(true);
     setScanDone(false);
     try {
-      await supabase.from("scans").insert({ user_id: user.id });
-      setScanCount(c => c + 1);
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1200,
-          messages: [{
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: mimeType, data: base64 } },
-              { type: "text", text: `Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
-
-Formato exacto:
-{"items":[{"name":"nombre","qty":1,"price":5990}],"propina":10,"descuento":0,"descMode":"total"}
-
-Reglas para items:
-- Incluye solo productos consumibles: platos, bebidas, postres, agregados.
-- EXCLUYE: líneas de propina, descuentos, subtotales, totales, líneas en $0 (cortesías o items sin precio).
-- price = precio TOTAL de la línea (cantidad × precio unitario), número entero sin puntos ni comas.
-- qty = cantidad indicada en la boleta (número entero). Si dice "x2" o "2x" en el nombre, extrae la cantidad al campo qty y limpia el nombre.
-- Si el mismo producto aparece en múltiples líneas (ej. "Taza de té" x3 veces), inclúyelas como items SEPARADOS con sus respectivos precios — no las agrupes.
-- Nombres: limpia prefijos como "JM:" o "Agr." pero mantén el nombre descriptivo.
-
-Reglas para propina/descuento:
-- propina: porcentaje numérico (ej. 10 para 10%). 0 si no hay.
-- descuento: porcentaje numérico. 0 si no hay.
-- descMode: "subtotal" si la propina se calcula sobre el monto original antes del descuento; "total" si el descuento aplica sobre el total con propina o no hay descuento.` }
-            ]
-          }]
-        })
+        body: JSON.stringify({ base64, mimeType }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast("Error al leer la boleta — intenta de nuevo");
+        console.error("API error:", err);
+        setAiLoading(false);
+        return;
+      }
       const data = await res.json();
       const text = (data.content || []).map(b => b.text || "").join("");
       const parsed = JSON.parse(text.trim());
-      if (parsed.items && Array.isArray(parsed.items)) {
+      if (parsed.items && Array.isArray(parsed.items) && parsed.items.length > 0) {
+        // Solo contar el scan si la IA detectó ítems exitosamente
+        await supabase.from("scans").insert({ user_id: user.id });
+        setScanCount(c => c + 1);
         setItems(parsed.items.map(it => ({ id: Date.now() + Math.random(), name: it.name, qty: it.qty || 1, price: Number(it.price) || 0 })));
         if (typeof parsed.propina === "number") setTip(parsed.propina);
         if (typeof parsed.descuento === "number") setDisc(parsed.descuento);
@@ -157,8 +139,13 @@ Reglas para propina/descuento:
         if (parsed.propina > 0 || parsed.descuento > 0) setAiDetected({ propina: parsed.propina, descuento: parsed.descuento });
         setScanDone(true);
         showToast(`Boleta lista · ${parsed.items.length} ítems detectados`);
+      } else {
+        showToast("No se detectaron ítems — intenta con otra foto");
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      showToast("Error al procesar la boleta — intenta de nuevo");
+    }
     setAiLoading(false);
   }, [scanCount, user.id]);
 
