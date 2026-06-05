@@ -1,13 +1,27 @@
-* { box-sizing: border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
 
 body {
-  margin: 0;
+  font-family: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
   background: #0A0A0A;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  color: #FAFAFA;
   -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+  letter-spacing: -.01em;
+  overflow-x: hidden;
 }
 
-#root {
-  width: 100%;
-}
+#root { width: 100%; }
+
+::selection { background: #2563FF; color: #fff; }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background: #262626; border-radius: 8px; border: 2px solid #0A0A0A; }
+
+input[type=number]::-webkit-inner-spin-button { opacity: 0.3; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fade { from { opacity: .45; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes scan { 0% { top: -36px; } 100% { top: 150px; } }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
