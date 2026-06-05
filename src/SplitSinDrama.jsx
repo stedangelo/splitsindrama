@@ -44,7 +44,7 @@ function parseBoleta(text) {
 }
 
 const STEPS = ["Cuenta", "Ajustes", "Reparto", "Resultado"];
-const SCAN_LIMIT = 3;
+const SCAN_LIMIT = 999; // temporal para pruebas
 const PCOLORS = ['#2563FF','#9333EA','#2FB877','#E8B23A','#EC4899','#06B6D4','#F97316','#8B5CF6'];
 
 const fmtCLP = (n) => "$" + Math.round(n).toLocaleString("es-CL");
@@ -161,9 +161,10 @@ export default function SplitSinDrama({ user }) {
       const { data: { text } } = await worker.recognize(dataUrl);
       await worker.terminate();
 
-      console.log("OCR texto:", text); // para debug
+      console.log("OCR texto completo:\n", text); // para debug
 
       const parsed = parseBoleta(text);
+      console.log("Ítems parseados:", parsed);
 
       if (parsed.length > 0) {
         await supabase.from("scans").insert({ user_id: user.id });
@@ -172,7 +173,9 @@ export default function SplitSinDrama({ user }) {
         setScanDone(true);
         showToast(`Boleta lista · ${parsed.length} ítems detectados`);
       } else {
-        showToast("No se detectaron ítems — intenta con foto más clara y derecha");
+        // Mostrar primeras líneas del texto OCR para debug
+        const preview = text.split("\n").filter(l => l.trim()).slice(0, 5).join(" | ");
+        showToast(`OCR leyó: "${preview.slice(0, 80)}..."`);
       }
     } catch (e) {
       console.error(e);
