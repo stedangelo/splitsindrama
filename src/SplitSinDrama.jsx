@@ -158,7 +158,9 @@ export default function SplitSinDrama({ user }) {
       const worker = await createWorker("spa+eng", 1, {
         logger: () => {}, // silenciar logs
       });
-      const { data: { text } } = await worker.recognize(dataUrl);
+      // Convertir dataUrl a Blob para que Tesseract lo lea correctamente
+      const blob = await fetch(dataUrl).then(r => r.blob());
+      const { data: { text } } = await worker.recognize(blob);
       await worker.terminate();
 
       console.log("OCR texto completo:\n", text); // para debug
