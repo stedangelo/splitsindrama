@@ -1,5 +1,47 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createWorker } from "tesseract.js";
 import { supabase } from "./supabase";
+
+// Parsea el texto OCR de una boleta chilena
+function parseBoleta(text) {
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  const items = [];
+
+  // Palabras a ignorar (no son ítems consumibles)
+  const SKIP = /propina|tip|descuento|discount|subtotal|total|iva|servicio|boleta|folio|rut|fecha|hora|mesa|garzón|garzon|caja|ticket|gracias|vuelto|efectivo|tarjeta|débito|credito|transbank|propina\s*sugerida/i;
+
+  for (const line of lines) {
+    if (SKIP.test(line)) continue;
+
+    // Busca precio al final de la línea: $1.990 o 1990 o 1.990
+    const priceMatch = line.match(/\$?\s*([\d]{1,3}(?:[.,]\d{3})+|\d{3,6})[\s]*$/);
+    if (!priceMatch) continue;
+
+    const priceRaw = priceMatch[1].replace(/[.,]/g, "");
+    const price = parseInt(priceRaw);
+    if (!price || price < 100 || price > 500000) continue; // filtro de precios razonables
+
+    // Nombre: todo lo que está antes del precio
+    let name = line.slice(0, line.lastIndexOf(priceMatch[0])).trim();
+
+    // Detectar cantidad al inicio: "2x", "x2", "2 x", "2-"
+    let qty = 1;
+    const qtyMatch = name.match(/^(\d+)\s*[xX\-]\s*/);
+    if (qtyMatch) {
+      qty = parseInt(qtyMatch[1]) || 1;
+      name = name.slice(qtyMatch[0].length).trim();
+    }
+
+    // Limpiar prefijos comunes
+    name = name.replace(/^(JM:|Agr\.?|AGR\.?)\s*/i, "").trim();
+
+    if (!name || name.length < 2) continue;
+
+    items.push({ name, qty, price });
+  }
+
+  return items;
+}
 
 const STEPS = ["Cuenta", "Ajustes", "Reparto", "Resultado"];
 const SCAN_LIMIT = 3;
@@ -107,44 +149,34 @@ export default function SplitSinDrama({ user }) {
     return per;
   };
 
-  // AI scan
-  const analyzeImage = useCallback(async (base64, mimeType) => {
+  // OCR scan con Tesseract.js
+  const analyzeImage = useCallback(async (dataUrl) => {
     if (scanCount >= SCAN_LIMIT) return;
     setAiLoading(true);
     setScanDone(false);
     try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ base64, mimeType }),
+      const worker = await createWorker("spa+eng", 1, {
+        logger: () => {}, // silenciar logs
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        showToast("Error al leer la boleta — intenta de nuevo");
-        console.error("API error:", err);
-        setAiLoading(false);
-        return;
-      }
-      const data = await res.json();
-      const text = (data.content || []).map(b => b.text || "").join("");
-      const parsed = JSON.parse(text.trim());
-      if (parsed.items && Array.isArray(parsed.items) && parsed.items.length > 0) {
-        // Solo contar el scan si la IA detectó ítems exitosamente
+      const { data: { text } } = await worker.recognize(dataUrl);
+      await worker.terminate();
+
+      console.log("OCR texto:", text); // para debug
+
+      const parsed = parseBoleta(text);
+
+      if (parsed.length > 0) {
         await supabase.from("scans").insert({ user_id: user.id });
         setScanCount(c => c + 1);
-        setItems(parsed.items.map(it => ({ id: Date.now() + Math.random(), name: it.name, qty: it.qty || 1, price: Number(it.price) || 0 })));
-        if (typeof parsed.propina === "number") setTip(parsed.propina);
-        if (typeof parsed.descuento === "number") setDisc(parsed.descuento);
-        if (parsed.descMode) setDiscMode(parsed.descMode === "subtotal" ? "con" : "sin");
-        if (parsed.propina > 0 || parsed.descuento > 0) setAiDetected({ propina: parsed.propina, descuento: parsed.descuento });
+        setItems(parsed.map(it => ({ id: Date.now() + Math.random(), ...it })));
         setScanDone(true);
-        showToast(`Boleta lista · ${parsed.items.length} ítems detectados`);
+        showToast(`Boleta lista · ${parsed.length} ítems detectados`);
       } else {
-        showToast("No se detectaron ítems — intenta con otra foto");
+        showToast("No se detectaron ítems — intenta con foto más clara y derecha");
       }
     } catch (e) {
       console.error(e);
-      showToast("Error al procesar la boleta — intenta de nuevo");
+      showToast("Error al leer la boleta — intenta de nuevo");
     }
     setAiLoading(false);
   }, [scanCount, user.id]);
@@ -155,7 +187,7 @@ export default function SplitSinDrama({ user }) {
     const reader = new FileReader();
     reader.onload = (e) => {
       setImgPreview(e.target.result);
-      analyzeImage(e.target.result.split(",")[1], file.type);
+      analyzeImage(e.target.result);
     };
     reader.readAsDataURL(file);
   }, [analyzeImage]);
