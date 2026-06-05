@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { createWorker } from "tesseract.js";
 import { supabase } from "./supabase";
 
 // Parsea el texto OCR de una boleta chilena
@@ -149,25 +148,29 @@ export default function SplitSinDrama({ user }) {
     return per;
   };
 
-  // OCR scan con Tesseract.js
-  const analyzeImage = useCallback(async (dataUrl) => {
+  // OCR scan via OCR.space API (servidor)
+  const analyzeImage = useCallback(async (base64, mimeType) => {
     if (scanCount >= SCAN_LIMIT) return;
     setAiLoading(true);
     setScanDone(false);
     try {
-      const worker = await createWorker("spa+eng", 1, {
-        workerPath: "https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/worker.min.js",
-        langPath: "https://tessdata.projectnaptha.com/4.0.0",
-        corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@6/tesseract-core-simd-lstm.wasm",
-        logger: () => {},
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base64, mimeType }),
       });
-      const { data: { text } } = await worker.recognize(dataUrl);
-      await worker.terminate();
+      const data = await res.json();
+      if (!res.ok) {
+        showToast("Error al leer la boleta — intenta de nuevo");
+        setAiLoading(false);
+        return;
+      }
 
-      console.log("OCR texto completo:\n", text); // para debug
+      const text = data.text || "";
+      console.log("OCR texto:\n", text);
 
       const parsed = parseBoleta(text);
-      console.log("Ítems parseados:", parsed);
+      console.log("Ítems:", parsed);
 
       if (parsed.length > 0) {
         await supabase.from("scans").insert({ user_id: user.id });
@@ -176,13 +179,13 @@ export default function SplitSinDrama({ user }) {
         setScanDone(true);
         showToast(`Boleta lista · ${parsed.length} ítems detectados`);
       } else {
-        // Mostrar primeras líneas del texto OCR para debug
-        const preview = text.split("\n").filter(l => l.trim()).slice(0, 5).join(" | ");
-        showToast(`OCR leyó: "${preview.slice(0, 80)}..."`);
+        const preview = text.split("\n").filter(l => l.trim()).slice(0, 4).join(" | ");
+        console.log("Sin ítems. OCR leyó:", preview);
+        showToast("No se detectaron ítems — revisa la foto");
       }
     } catch (e) {
       console.error(e);
-      showToast("Error al leer la boleta — intenta de nuevo");
+      showToast("Error al procesar — intenta de nuevo");
     }
     setAiLoading(false);
   }, [scanCount, user.id]);
@@ -193,7 +196,7 @@ export default function SplitSinDrama({ user }) {
     const reader = new FileReader();
     reader.onload = (e) => {
       setImgPreview(e.target.result);
-      analyzeImage(e.target.result);
+      analyzeImage(e.target.result.split(",")[1], file.type);
     };
     reader.readAsDataURL(file);
   }, [analyzeImage]);
