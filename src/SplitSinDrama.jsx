@@ -149,19 +149,34 @@ export default function SplitSinDrama({ user }) {
     return per;
   };
 
+  // Convierte cualquier imagen a PNG via canvas (soluciona HEIC y otros formatos)
+  const toCanvasPng = (dataUrl) => new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      res(canvas);
+    };
+    img.onerror = rej;
+    img.src = dataUrl;
+  });
+
   // OCR scan con Tesseract.js (archivos locales, sin CORB)
   const analyzeImage = useCallback(async (dataUrl) => {
     if (scanCount >= SCAN_LIMIT) return;
     setAiLoading(true);
     setScanDone(false);
     try {
+      const canvas = await toCanvasPng(dataUrl);
       const worker = await createWorker("spa+eng", 1, {
         workerPath: "/tesseract/worker.min.js",
         corePath: "/tesseract",
         langPath: "https://tessdata.projectnaptha.com/4.0.0",
         logger: () => {},
       });
-      const { data: { text } } = await worker.recognize(dataUrl);
+      const { data: { text } } = await worker.recognize(canvas);
       await worker.terminate();
 
       console.log("OCR texto:\n", text);
