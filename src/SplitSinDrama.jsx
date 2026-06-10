@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createWorker } from "tesseract.js";
 import { supabase } from "./supabase";
 
 // Parsea el texto OCR de una boleta chilena
@@ -148,27 +149,22 @@ export default function SplitSinDrama({ user }) {
     return per;
   };
 
-  // OCR scan via OCR.space API (servidor)
-  const analyzeImage = useCallback(async (base64, mimeType) => {
+  // OCR scan con Tesseract.js (archivos locales, sin CORB)
+  const analyzeImage = useCallback(async (dataUrl) => {
     if (scanCount >= SCAN_LIMIT) return;
     setAiLoading(true);
     setScanDone(false);
     try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ base64, mimeType }),
+      const worker = await createWorker("spa+eng", 1, {
+        workerPath: "/tesseract/worker.min.js",
+        corePath: "/tesseract/tesseract-core-simd-lstm.wasm",
+        langPath: "https://tessdata.projectnaptha.com/4.0.0",
+        logger: () => {},
       });
-      const data = await res.json();
-      if (!res.ok) {
-        showToast("Error al leer la boleta — intenta de nuevo");
-        setAiLoading(false);
-        return;
-      }
+      const { data: { text } } = await worker.recognize(dataUrl);
+      await worker.terminate();
 
-      const text = data.text || "";
       console.log("OCR texto:\n", text);
-
       const parsed = parseBoleta(text);
       console.log("Ítems:", parsed);
 
@@ -196,7 +192,7 @@ export default function SplitSinDrama({ user }) {
     const reader = new FileReader();
     reader.onload = (e) => {
       setImgPreview(e.target.result);
-      analyzeImage(e.target.result.split(",")[1], file.type);
+      analyzeImage(e.target.result);
     };
     reader.readAsDataURL(file);
   }, [analyzeImage]);
