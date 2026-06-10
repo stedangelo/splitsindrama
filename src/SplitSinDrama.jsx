@@ -157,7 +157,7 @@ export default function SplitSinDrama({ user }) {
     try {
       const worker = await createWorker("spa+eng", 1, {
         workerPath: "/tesseract/worker.min.js",
-        corePath: "/tesseract/tesseract-core-simd-lstm.wasm",
+        corePath: "/tesseract",
         langPath: "https://tessdata.projectnaptha.com/4.0.0",
         logger: () => {},
       });
