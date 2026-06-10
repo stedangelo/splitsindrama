@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { createWorker } from "tesseract.js";
 import { supabase } from "./supabase";
 
 // Parsea el texto OCR de una boleta chilena
@@ -149,50 +148,34 @@ export default function SplitSinDrama({ user }) {
     return per;
   };
 
-  // Convierte cualquier imagen a PNG via canvas (soluciona HEIC y otros formatos)
-  const toCanvasPng = (dataUrl) => new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext("2d").drawImage(img, 0, 0);
-      res(canvas);
-    };
-    img.onerror = rej;
-    img.src = dataUrl;
-  });
-
-  // OCR scan con Tesseract.js (archivos locales, sin CORB)
-  const analyzeImage = useCallback(async (dataUrl) => {
+  // Scan con Groq vision IA
+  const analyzeImage = useCallback(async (base64, mimeType) => {
     if (scanCount >= SCAN_LIMIT) return;
     setAiLoading(true);
     setScanDone(false);
     try {
-      const canvas = await toCanvasPng(dataUrl);
-      const worker = await createWorker("spa+eng", 1, {
-        workerPath: "/tesseract/worker.min.js",
-        corePath: "/tesseract",
-        langPath: "https://tessdata.projectnaptha.com/4.0.0",
-        logger: () => {},
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base64, mimeType }),
       });
-      const { data: { text } } = await worker.recognize(canvas);
-      await worker.terminate();
+      const data = await res.json();
+      if (!res.ok) { showToast("Error al leer la boleta — intenta de nuevo"); setAiLoading(false); return; }
 
-      console.log("OCR texto:\n", text);
-      const parsed = parseBoleta(text);
-      console.log("Ítems:", parsed);
-
-      if (parsed.length > 0) {
+      const text = (data.content || []).map(b => b.text || "").join("").trim();
+      const parsed = JSON.parse(text);
+      if (parsed.items?.length > 0) {
         await supabase.from("scans").insert({ user_id: user.id });
         setScanCount(c => c + 1);
-        setItems(parsed.map(it => ({ id: Date.now() + Math.random(), ...it })));
+        setItems(parsed.items.map(it => ({ id: Date.now() + Math.random(), name: it.name, qty: it.qty || 1, price: Number(it.price) || 0 })));
+        if (typeof parsed.propina === "number") setTip(parsed.propina);
+        if (typeof parsed.descuento === "number") setDisc(parsed.descuento);
+        if (parsed.descMode) setDiscMode(parsed.descMode === "subtotal" ? "con" : "sin");
+        if (parsed.propina > 0 || parsed.descuento > 0) setAiDetected({ propina: parsed.propina, descuento: parsed.descuento });
         setScanDone(true);
-        showToast(`Boleta lista · ${parsed.length} ítems detectados`);
+        showToast(`Boleta lista · ${parsed.items.length} ítems detectados`);
       } else {
-        const preview = text.split("\n").filter(l => l.trim()).slice(0, 4).join(" | ");
-        console.log("Sin ítems. OCR leyó:", preview);
-        showToast("No se detectaron ítems — revisa la foto");
+        showToast("No se detectaron ítems — intenta con otra foto");
       }
     } catch (e) {
       console.error(e);
@@ -207,7 +190,7 @@ export default function SplitSinDrama({ user }) {
     const reader = new FileReader();
     reader.onload = (e) => {
       setImgPreview(e.target.result);
-      analyzeImage(e.target.result);
+      analyzeImage(e.target.result.split(",")[1], file.type);
     };
     reader.readAsDataURL(file);
   }, [analyzeImage]);

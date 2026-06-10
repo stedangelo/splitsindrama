@@ -4,31 +4,53 @@ export default async function handler(req, res) {
   const { base64, mimeType } = req.body;
   if (!base64 || !mimeType) return res.status(400).json({ error: "Missing base64 or mimeType" });
 
-  const apiKey = process.env.OCR_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "OCR API key not configured" });
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "API key not configured" });
 
-  // Llamar a OCR.space
-  const formData = new URLSearchParams();
-  formData.append("apikey", apiKey);
-  formData.append("base64Image", `data:${mimeType};base64,${base64}`);
-  formData.append("language", "spa");
-  formData.append("isTable", "false");
-  formData.append("OCREngine", "2"); // Engine 2 es mejor para fotos
-  formData.append("scale", "true");
-  formData.append("detectOrientation", "true");
-
-  const response = await fetch("https://api.ocr.space/parse/image", {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: formData.toString(),
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      max_tokens: 1200,
+      messages: [{
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url: `data:${mimeType};base64,${base64}` }
+          },
+          {
+            type: "text",
+            text: `Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
+
+Formato exacto:
+{"items":[{"name":"nombre","qty":1,"price":5990}],"propina":10,"descuento":0,"descMode":"total"}
+
+Reglas para items:
+- Incluye solo productos consumibles: platos, bebidas, postres, agregados.
+- EXCLUYE: líneas de propina, descuentos, subtotales, totales, líneas en $0.
+- price = precio TOTAL de la línea (cantidad × precio unitario), número entero sin puntos ni comas.
+- qty = cantidad indicada en la boleta. Si dice "x2" o "2x" en el nombre, extrae la cantidad al campo qty y limpia el nombre.
+- Si el mismo producto aparece en múltiples líneas, inclúyelas como items SEPARADOS.
+- Nombres: limpia prefijos como "JM:" o "Agr." pero mantén el nombre descriptivo.
+
+Reglas para propina/descuento:
+- propina: porcentaje numérico (ej. 10 para 10%). 0 si no hay.
+- descuento: porcentaje numérico. 0 si no hay.
+- descMode: "subtotal" si la propina se calcula sobre el monto original; "total" si no hay descuento.`
+          }
+        ]
+      }]
+    })
   });
 
   const data = await response.json();
+  if (!response.ok) return res.status(response.status).json({ error: data.error?.message || "Groq error" });
 
-  if (data.IsErroredOnProcessing) {
-    return res.status(500).json({ error: data.ErrorMessage?.[0] || "OCR error" });
-  }
-
-  const text = data.ParsedResults?.[0]?.ParsedText || "";
-  res.status(200).json({ text });
+  const text = data.choices?.[0]?.message?.content || "";
+  res.status(200).json({ content: [{ text }] });
 }
