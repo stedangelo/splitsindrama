@@ -163,7 +163,10 @@ export default function SplitSinDrama({ user }) {
       if (!res.ok) { showToast("Error al leer la boleta — intenta de nuevo"); setAiLoading(false); return; }
 
       const text = (data.content || []).map(b => b.text || "").join("").trim();
-      const parsed = JSON.parse(text);
+      console.log("Respuesta IA:", text.slice(0, 400));
+      // Limpiar posibles backticks de markdown
+      const clean = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
+      const parsed = JSON.parse(clean);
       if (parsed.items?.length > 0) {
         await supabase.from("scans").insert({ user_id: user.id });
         setScanCount(c => c + 1);

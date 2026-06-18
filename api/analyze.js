@@ -52,5 +52,6 @@ Reglas para propina/descuento:
   if (!response.ok) return res.status(response.status).json({ error: data.error?.message || "Groq error" });
 
   const text = data.choices?.[0]?.message?.content || "";
+  console.log("Groq respuesta:", text.slice(0, 300));
   res.status(200).json({ content: [{ text }] });
 }
