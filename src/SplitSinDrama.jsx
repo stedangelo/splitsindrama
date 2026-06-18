@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "./supabase";
+import heic2any from "heic2any";
 
 // Parsea el texto OCR de una boleta chilena
 function parseBoleta(text) {
@@ -187,44 +188,52 @@ export default function SplitSinDrama({ user }) {
     setAiLoading(false);
   }, [scanCount, user.id]);
 
-  const processFile = useCallback((file) => {
+  const processFile = useCallback(async (file) => {
     if (!file) return;
     const ext = file.name?.split(".").pop()?.toLowerCase() || "";
+    const isHeic = file.type === "image/heic" || file.type === "image/heif" || ext === "heic" || ext === "heif";
     const isImage = file.type.startsWith("image/") || ["heic", "heif", "jpg", "jpeg", "png", "webp"].includes(ext);
     if (!isImage) return;
-    setItems([]); setScanDone(false);
+    setItems([]); setScanDone(false); setAiLoading(true);
 
-    const sendAsJpeg = (dataUrl) => {
-      setImgPreview(dataUrl);
-      analyzeImage(dataUrl.split(",")[1], "image/jpeg");
-    };
+    try {
+      let blob = file;
+      if (isHeic) {
+        blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+        if (Array.isArray(blob)) blob = blob[0];
+      }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      // Convert any image to JPEG via canvas (handles HEIC on Safari/iOS)
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 1600;
-        let w = img.naturalWidth, h = img.naturalHeight;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else { w = Math.round(w * MAX / h); h = MAX; }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = w; canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        sendAsJpeg(canvas.toDataURL("image/jpeg", 0.92));
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        // Resize to max 1600px via canvas
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 1600;
+          let w = img.naturalWidth, h = img.naturalHeight;
+          if (w > MAX || h > MAX) {
+            if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+            else { w = Math.round(w * MAX / h); h = MAX; }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          const jpeg = canvas.toDataURL("image/jpeg", 0.92);
+          setImgPreview(jpeg);
+          analyzeImage(jpeg.split(",")[1], "image/jpeg");
+        };
+        img.onerror = () => {
+          setImgPreview(dataUrl);
+          analyzeImage(dataUrl.split(",")[1], "image/jpeg");
+        };
+        img.src = dataUrl;
       };
-      img.onerror = () => {
-        // Canvas couldn't decode — send raw and hope the API handles it
-        const rawMime = file.type || "image/jpeg";
-        setImgPreview(dataUrl);
-        analyzeImage(dataUrl.split(",")[1], rawMime);
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.error("Error procesando imagen:", err);
+      showToast("No se pudo leer la imagen — intenta con otra foto");
+      setAiLoading(false);
+    }
   }, [analyzeImage]);
 
   const removeItem = (id) => {
