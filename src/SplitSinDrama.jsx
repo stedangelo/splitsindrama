@@ -188,12 +188,41 @@ export default function SplitSinDrama({ user }) {
   }, [scanCount, user.id]);
 
   const processFile = useCallback((file) => {
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!file) return;
+    const ext = file.name?.split(".").pop()?.toLowerCase() || "";
+    const isImage = file.type.startsWith("image/") || ["heic", "heif", "jpg", "jpeg", "png", "webp"].includes(ext);
+    if (!isImage) return;
     setItems([]); setScanDone(false);
+
+    const sendAsJpeg = (dataUrl) => {
+      setImgPreview(dataUrl);
+      analyzeImage(dataUrl.split(",")[1], "image/jpeg");
+    };
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      setImgPreview(e.target.result);
-      analyzeImage(e.target.result.split(",")[1], file.type);
+      const dataUrl = e.target.result;
+      // Convert any image to JPEG via canvas (handles HEIC on Safari/iOS)
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1600;
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        sendAsJpeg(canvas.toDataURL("image/jpeg", 0.92));
+      };
+      img.onerror = () => {
+        // Canvas couldn't decode — send raw and hope the API handles it
+        const rawMime = file.type || "image/jpeg";
+        setImgPreview(dataUrl);
+        analyzeImage(dataUrl.split(",")[1], rawMime);
+      };
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   }, [analyzeImage]);
