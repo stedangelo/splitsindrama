@@ -136,19 +136,28 @@ export default function SplitSinDrama({ user }) {
     return out;
   };
 
+  const deserializeMarks = (raw) => {
+    const next = {};
+    for (const [k, v] of Object.entries(raw || {})) next[k] = new Set(v);
+    return next;
+  };
+
   const createSala = async () => {
     setSalaLoading(true);
     try {
+      const serialized = serializeMarks(marks);
       const { data, error } = await supabase.from("sessions").insert({
         owner_id: user.id,
         items,
         members,
-        marks: serializeMarks(marks),
+        marks: serialized,
         tip,
         disc,
         disc_mode: discMode,
-      }).select("id").single();
+      }).select("id, marks").single();
       if (error) throw error;
+      // Restore marks from DB response to avoid any React state race
+      setMarks(deserializeMarks(data.marks || {}));
       setSalaId(data.id);
     } catch (e) {
       console.error(e);
@@ -157,21 +166,21 @@ export default function SplitSinDrama({ user }) {
     setSalaLoading(false);
   };
 
-  // Sync marks back from sala in real-time (host view)
+  // Sync marks from sala in real-time (host view) — delay avoids INSERT echo
   useEffect(() => {
     if (!salaId) return;
-    const channel = supabase
-      .channel(`host-${salaId}`)
-      .on("postgres_changes", {
-        event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${salaId}`
-      }, payload => {
-        const raw = payload.new.marks || {};
-        const next = {};
-        for (const [k, v] of Object.entries(raw)) next[k] = new Set(v);
-        setMarks(next);
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    let channel;
+    const timer = setTimeout(() => {
+      channel = supabase
+        .channel(`host-${salaId}`)
+        .on("postgres_changes", {
+          event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${salaId}`
+        }, payload => {
+          setMarks(deserializeMarks(payload.new.marks || {}));
+        })
+        .subscribe();
+    }, 800);
+    return () => { clearTimeout(timer); if (channel) supabase.removeChannel(channel); };
   }, [salaId]);
 
   // Totals engine
