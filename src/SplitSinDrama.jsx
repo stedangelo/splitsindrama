@@ -114,6 +114,8 @@ export default function SplitSinDrama({ user }) {
   const [scanDone, setScanDone] = useState(false);
   const [toast, setToast] = useState({ show: false, msg: "" });
   const [copied, setCopied] = useState({});
+  const [salaId, setSalaId] = useState(null);
+  const [salaLoading, setSalaLoading] = useState(false);
   const fileRef = useRef();
   let toastTimer = useRef();
 
@@ -127,6 +129,50 @@ export default function SplitSinDrama({ user }) {
     setToast({ show: true, msg });
     toastTimer.current = setTimeout(() => setToast({ show: false, msg: "" }), 2200);
   };
+
+  const serializeMarks = (m) => {
+    const out = {};
+    for (const [k, v] of Object.entries(m)) out[k] = [...v];
+    return out;
+  };
+
+  const createSala = async () => {
+    setSalaLoading(true);
+    try {
+      const { data, error } = await supabase.from("sessions").insert({
+        owner_id: user.id,
+        items,
+        members,
+        marks: serializeMarks(marks),
+        tip,
+        disc,
+        disc_mode: discMode,
+      }).select("id").single();
+      if (error) throw error;
+      setSalaId(data.id);
+    } catch (e) {
+      console.error(e);
+      showToast("Error al crear sala — intenta de nuevo");
+    }
+    setSalaLoading(false);
+  };
+
+  // Sync marks back from sala in real-time (host view)
+  useEffect(() => {
+    if (!salaId) return;
+    const channel = supabase
+      .channel(`host-${salaId}`)
+      .on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${salaId}`
+      }, payload => {
+        const raw = payload.new.marks || {};
+        const next = {};
+        for (const [k, v] of Object.entries(raw)) next[k] = new Set(v);
+        setMarks(next);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [salaId]);
 
   // Totals engine
   const subtotal = items.reduce((s, i) => s + i.price, 0);
@@ -656,6 +702,38 @@ export default function SplitSinDrama({ user }) {
           {emptyMembers.size > 0 && (
             <div style={{ marginTop: 9, fontSize: 12, color: "#f59e0b" }}>
               ⚠ Sin marcar: {members.filter(m => emptyMembers.has(m.id)).map(m => m.name).join(", ")}
+            </div>
+          )}
+        </div>
+
+        {/* Compartir sala */}
+        <div style={{ marginTop: 16, background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "16px 18px" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Sala compartida</div>
+          <div style={{ fontSize: 12.5, color: T.textDim, marginBottom: 12 }}>Comparte el link para que cada uno marque lo que consumió desde su cel — en tiempo real.</div>
+          {!salaId ? (
+            <button
+              onClick={createSala}
+              disabled={salaLoading || members.length < 1}
+              style={{ ...btnPrimary, fontSize: 13, padding: "9px 16px", opacity: members.length < 1 ? 0.4 : 1 }}
+            >
+              {salaLoading ? "Creando…" : "🔗 Crear sala y copiar link"}
+            </button>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  readOnly
+                  value={`${window.location.origin}/#/sala/${salaId}`}
+                  style={{ flex: 1, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 9, padding: "8px 12px", color: T.textDim, fontSize: 12, fontFamily: "monospace", outline: "none" }}
+                />
+                <button
+                  onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/#/sala/${salaId}`); showToast("Link copiado"); }}
+                  style={{ ...btnPrimary, fontSize: 12, padding: "8px 14px", flexShrink: 0 }}
+                >
+                  Copiar
+                </button>
+              </div>
+              <div style={{ fontSize: 11.5, color: "#22c55e" }}>✓ Sala activa — los checks aparecen aquí en tiempo real</div>
             </div>
           )}
         </div>
