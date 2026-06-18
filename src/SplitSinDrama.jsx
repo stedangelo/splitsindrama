@@ -519,6 +519,16 @@ export default function SplitSinDrama({ user }) {
   // ─── STEP 2: REPARTO ──────────────────────────────────────
   const renderReparto = () => {
     const per = getPerPerson();
+
+    // Cuánto se ha marcado en total (sin propina)
+    const assignedBase = Object.values(per).reduce((s, p) => s + p.base, 0);
+    const assignedFinal = Object.values(per).reduce((s, p) => s + p.final, 0);
+    const assignedPct = grand > 0 ? Math.min(100, Math.round(assignedFinal / grand * 100)) : 0;
+    const unassignedAmt = grand - assignedFinal;
+    const allDone = Math.abs(unassignedAmt) < 1;
+
+    // Columnas sin ningún ítem marcado
+    const emptyMembers = new Set(members.filter(m => (per[m.id]?.base || 0) === 0).map(m => m.id));
     return (
       <div>
         <div style={{ marginBottom: 26 }}>
@@ -605,10 +615,18 @@ export default function SplitSinDrama({ user }) {
               </tbody>
               <tfoot>
                 <tr>
-                  <td style={{ padding: "12px 18px", fontWeight: 600, color: T.textDim, borderTop: `1px solid ${T.borderStrong}`, background: T.surface2 }}>Subtotal por persona</td>
+                  <td style={{ padding: "10px 18px", fontWeight: 500, fontSize: 12.5, color: T.textDim, borderTop: `1px solid ${T.borderStrong}`, background: T.surface2 }}>Sin propina</td>
                   {members.map(m => (
-                    <td key={m.id} style={{ padding: "12px 10px", fontFamily: "monospace", fontSize: 12.5, color: T.textDim, borderTop: `1px solid ${T.borderStrong}`, background: T.surface2, textAlign: "center" }}>
+                    <td key={m.id} style={{ padding: "10px 10px", fontFamily: "monospace", fontSize: 12, color: T.textDim, borderTop: `1px solid ${T.borderStrong}`, background: T.surface2, textAlign: "center" }}>
                       {fmtCLP(per[m.id]?.base || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td style={{ padding: "10px 18px", fontWeight: 700, fontSize: 13, color: T.text, background: T.surface2 }}>Con propina{tip > 0 ? ` (${tip}%)` : ""}{disc > 0 ? ` · desc. ${disc}%` : ""}</td>
+                  {members.map(m => (
+                    <td key={m.id} style={{ padding: "10px 10px", fontFamily: "monospace", fontSize: 13, fontWeight: 700, color: emptyMembers.has(m.id) ? T.textFaint : T.text, background: T.surface2, textAlign: "center" }}>
+                      {emptyMembers.has(m.id) ? "—" : fmtCLP(per[m.id]?.final || 0)}
                     </td>
                   ))}
                 </tr>
@@ -620,6 +638,26 @@ export default function SplitSinDrama({ user }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, color: T.textFaint, fontSize: 12.5 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={T.accentHi} strokeWidth="2"/><path d="M12 11v5M12 8h.01" stroke={T.accentHi} strokeWidth="2.2" strokeLinecap="round"/></svg>
           Un ítem marcado por varias personas se reparte equitativamente entre ellas.
+        </div>
+
+        {/* Barra de progreso */}
+        <div style={{ marginTop: 20, background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "14px 18px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: allDone ? "#22c55e" : T.text }}>
+              {allDone ? "✓ Todo marcado" : `Marcado: ${fmtCLP(assignedFinal)} de ${fmtCLP(grand)}`}
+            </span>
+            <span style={{ fontSize: 12, color: allDone ? "#22c55e" : T.textDim, fontFamily: "monospace" }}>
+              {allDone ? "" : `Falta ${fmtCLP(unassignedAmt)}`}
+            </span>
+          </div>
+          <div style={{ height: 7, borderRadius: 99, background: T.surface2, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${assignedPct}%`, borderRadius: 99, background: allDone ? "#22c55e" : T.accent, transition: "width .3s ease" }} />
+          </div>
+          {emptyMembers.size > 0 && (
+            <div style={{ marginTop: 9, fontSize: 12, color: "#f59e0b" }}>
+              ⚠ Sin marcar: {members.filter(m => emptyMembers.has(m.id)).map(m => m.name).join(", ")}
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, marginTop: 28 }}>
