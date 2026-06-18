@@ -249,32 +249,21 @@ export default function SplitSinDrama({ user }) {
         if (Array.isArray(blob)) blob = blob[0];
       }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target.result;
-        // Resize to max 1600px via canvas
-        const img = new Image();
-        img.onload = () => {
-          const MAX = 1600;
-          let w = img.naturalWidth, h = img.naturalHeight;
-          if (w > MAX || h > MAX) {
-            if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-            else { w = Math.round(w * MAX / h); h = MAX; }
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = w; canvas.height = h;
-          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-          const jpeg = canvas.toDataURL("image/jpeg", 0.92);
-          setImgPreview(jpeg);
-          analyzeImage(jpeg.split(",")[1], "image/jpeg");
-        };
-        img.onerror = () => {
-          setImgPreview(dataUrl);
-          analyzeImage(dataUrl.split(",")[1], "image/jpeg");
-        };
-        img.src = dataUrl;
-      };
-      reader.readAsDataURL(blob);
+      // createImageBitmap with imageOrientation applies EXIF rotation automatically
+      const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
+      const MAX = 1600;
+      let w = bitmap.width, h = bitmap.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+      bitmap.close();
+      const jpeg = canvas.toDataURL("image/jpeg", 0.92);
+      setImgPreview(jpeg);
+      analyzeImage(jpeg.split(",")[1], "image/jpeg");
     } catch (err) {
       console.error("Error procesando imagen:", err);
       showToast("No se pudo leer la imagen — intenta con otra foto");
