@@ -260,7 +260,7 @@ export default function SplitSinDrama({ user }) {
 
       // createImageBitmap with imageOrientation applies EXIF rotation automatically
       const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
-      const MAX = 1600;
+      const MAX = 1800;
       let w = bitmap.width, h = bitmap.height;
       if (w > MAX || h > MAX) {
         if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -268,10 +268,13 @@ export default function SplitSinDrama({ user }) {
       }
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+      const ctx = canvas.getContext("2d");
+      // Boost contrast and saturation to help AI read low-quality receipt photos
+      ctx.filter = "contrast(1.4) brightness(1.1) saturate(0.2)";
+      ctx.drawImage(bitmap, 0, 0, w, h);
       bitmap.close();
-      const jpeg = canvas.toDataURL("image/jpeg", 0.92);
-      setImgPreview(jpeg);
+      const jpeg = canvas.toDataURL("image/jpeg", 0.95);
+      setImgPreview(canvas.toDataURL("image/jpeg", 0.7)); // preview at lower quality
       analyzeImage(jpeg.split(",")[1], "image/jpeg");
     } catch (err) {
       console.error("Error procesando imagen:", err);
@@ -738,9 +741,17 @@ export default function SplitSinDrama({ user }) {
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, marginTop: 28 }}>
           <button style={btnGhost} onClick={() => setStep(1)}><ArrowLeft /> Volver</button>
-          <button style={{ ...btnPrimary, opacity: members.length < 2 ? 0.4 : 1, cursor: members.length < 2 ? "not-allowed" : "pointer" }} onClick={() => members.length >= 2 && setStep(3)}>
-            Ver resultado <ArrowRight />
-          </button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5 }}>
+            {!allDone && members.length >= 2 && (
+              <span style={{ fontSize: 11.5, color: "#f59e0b" }}>Falta marcar {fmtCLP(unassignedAmt)}</span>
+            )}
+            <button
+              style={{ ...btnPrimary, opacity: (!allDone || members.length < 2) ? 0.4 : 1, cursor: (!allDone || members.length < 2) ? "not-allowed" : "pointer" }}
+              onClick={() => allDone && members.length >= 2 && setStep(3)}
+            >
+              Ver resultado <ArrowRight />
+            </button>
+          </div>
         </div>
       </div>
     );
