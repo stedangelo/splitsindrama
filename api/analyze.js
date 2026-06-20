@@ -25,23 +25,24 @@ export default async function handler(req, res) {
           },
           {
             type: "text",
-            text: `Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
+            text: `Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Puede estar en formato ticket de papel o boleta electrónica tributaria con columnas. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
 
 Formato exacto:
 {"items":[{"name":"nombre","qty":1,"price":5990}],"propina":10,"descuento":0,"descMode":"total"}
 
 Reglas para items:
 - Incluye solo productos consumibles: platos, bebidas, postres, agregados.
-- EXCLUYE: líneas de propina, descuentos, subtotales, totales, líneas en $0.
+- EXCLUYE completamente: filas de "Descuento", propina, subtotales, totales, líneas en $0, ingredientes sueltos (mantequilla, tomate, etc.), items de restaurante/proveedor.
 - price = precio TOTAL de la línea (cantidad × precio unitario), número entero sin puntos ni comas.
-- qty = cantidad indicada en la boleta. Si dice "x2" o "2x" en el nombre, extrae la cantidad al campo qty y limpia el nombre.
+- qty = cantidad indicada en la boleta (número a la izquierda del nombre). Si dice "x2" o "2x" en el nombre, extrae la cantidad al campo qty y limpia el nombre.
+- En boletas electrónicas con formato de tabla: el nombre puede ocupar 2 líneas, la cantidad está a la izquierda y el precio a la derecha. Si hay una fila "Descuento %10" inmediatamente después de un ítem, ignórala (el descuento se captura globalmente).
 - Si el mismo producto aparece en múltiples líneas, inclúyelas como items SEPARADOS.
-- Nombres: limpia prefijos como "JM:" o "Agr." pero mantén el nombre descriptivo.
+- Nombres: limpia prefijos como "JM:", "Agr.", códigos numéricos al inicio. Conserva el nombre descriptivo. Si el nombre ocupa dos líneas, únelas con espacio.
 
 Reglas para propina/descuento:
-- propina: porcentaje numérico (ej. 10 para 10%). 0 si no hay.
-- descuento: porcentaje numérico. 0 si no hay.
-- descMode: "subtotal" si la propina se calcula sobre el monto original; "total" si no hay descuento.`
+- propina: porcentaje numérico (ej. 10 para 10%). 0 si no hay. Busca "PROPINA SUGERIDA X%" o similar.
+- descuento: si hay filas de "Descuento %X" aplicadas a cada ítem, captura ese porcentaje aquí. 0 si no hay.
+- descMode: "subtotal" si la propina se calcula sobre el monto original antes del descuento; "total" si no hay descuento o la propina va sobre el total final.`
           }
         ]
       }]
