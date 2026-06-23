@@ -44,7 +44,9 @@ function parseBoleta(text) {
 }
 
 const STEPS = ["Cuenta", "Ajustes", "Reparto", "Resultado"];
-const SCAN_LIMIT = 999; // temporal para pruebas
+const SCAN_LIMIT = 3;
+const PRICE_CLP = 2990;
+const MP_PAYMENT_LINK = "https://link.mercadopago.cl/donc3lla";
 const PCOLORS = ['#2563FF','#9333EA','#2FB877','#E8B23A','#EC4899','#06B6D4','#F97316','#8B5CF6'];
 
 const fmtCLP = (n) => "$" + Math.round(n).toLocaleString("es-CL");
@@ -116,12 +118,15 @@ export default function SplitSinDrama({ user }) {
   const [copied, setCopied] = useState({});
   const [salaId, setSalaId] = useState(null);
   const [salaLoading, setSalaLoading] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
   const fileRef = useRef();
   let toastTimer = useRef();
 
   useEffect(() => {
     supabase.from("scans").select("id", { count: "exact" }).eq("user_id", user.id)
       .then(({ count }) => setScanCount(count || 0));
+    supabase.from("subscriptions").select("id").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => { if (data) setSubscribed(true); });
   }, [user.id]);
 
   const showToast = (msg) => {
@@ -339,8 +344,53 @@ export default function SplitSinDrama({ user }) {
     });
   };
 
-  const scansLeft = SCAN_LIMIT - scanCount;
-  const limitReached = scansLeft <= 0;
+  const scansLeft = subscribed ? Infinity : Math.max(0, SCAN_LIMIT - scanCount);
+  const limitReached = !subscribed && scanCount >= SCAN_LIMIT;
+
+  // ─── PAYWALL ──────────────────────────────────────────────
+  const renderPaywall = () => (
+    <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "32px 16px" }}>
+      <div style={{ width: 64, height: 64, borderRadius: 18, background: T.accentSoft, display: "grid", placeItems: "center", marginBottom: 20, color: T.accentHi }}>
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </div>
+      <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 10 }}>Usaste tus 3 escaneos gratis</h2>
+      <p style={{ color: T.textDim, fontSize: 15, maxWidth: "38ch", marginBottom: 28, lineHeight: 1.6 }}>
+        Activa Split Sin Drama Pro y escanea todas las boletas que quieras — sin límite.
+      </p>
+
+      <div style={{ background: T.surface, border: `1px solid ${T.borderAccent}`, borderRadius: T.radius, padding: "24px 28px", marginBottom: 24, width: "100%", maxWidth: 360 }}>
+        <div style={{ fontSize: 13, color: T.textDim, marginBottom: 4 }}>Split Sin Drama Pro</div>
+        <div style={{ fontFamily: "monospace", fontSize: 36, fontWeight: 700, color: T.text, marginBottom: 4 }}>{fmtCLP(PRICE_CLP)}<span style={{ fontSize: 15, fontWeight: 400, color: T.textDim }}>/mes</span></div>
+        <div style={{ fontSize: 13, color: T.textFaint, marginBottom: 20 }}>Pago único mensual · cancela cuando quieras</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5, color: T.textDim, textAlign: "left", marginBottom: 20 }}>
+          {["✓ Escaneos ilimitados con IA", "✓ Sala compartida en tiempo real", "✓ Botón de pago Mercado Pago"].map(f => (
+            <div key={f}>{f}</div>
+          ))}
+        </div>
+        <a
+          href={`${MP_PAYMENT_LINK}?amount=${PRICE_CLP}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => {
+            // After clicking, show confirmation hint
+          }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 20px", borderRadius: 10, background: "#009ee3", color: "#fff", fontFamily: "inherit", fontSize: 15, fontWeight: 700, textDecoration: "none", marginBottom: 12 }}
+        >
+          Pagar {fmtCLP(PRICE_CLP)} con Mercado Pago
+        </a>
+        <a
+          href={`https://wa.me/56940393532?text=${encodeURIComponent(`Hola! Acabo de pagar Split Sin Drama Pro. Mi email es ${user.email}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "11px 20px", borderRadius: 10, background: "#25D366", color: "#fff", fontFamily: "inherit", fontSize: 14, fontWeight: 600, textDecoration: "none" }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Ya pagué — escríbenos para activar
+        </a>
+      </div>
+      <div style={{ fontSize: 12, color: T.textFaint }}>¿Preguntas? Escríbenos por WhatsApp</div>
+    </div>
+  );
 
   // ─── STEP 0: CUENTA ───────────────────────────────────────
   const renderCuenta = () => (
@@ -907,7 +957,7 @@ export default function SplitSinDrama({ user }) {
       {/* Content */}
       <main style={{ maxWidth: 880, margin: "0 auto", width: "100%", padding: "clamp(26px, 5vw, 46px) clamp(18px, 4vw, 28px) 120px", flex: 1, position: "relative", zIndex: 1 }}>
         <div style={{ animation: "fade .45s cubic-bezier(.22,.61,.36,1)" }} key={step}>
-          {panels[step]()}
+          {limitReached && step === 0 ? renderPaywall() : panels[step]()}
         </div>
       </main>
 
