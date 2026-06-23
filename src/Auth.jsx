@@ -23,6 +23,11 @@ export function useAuth() {
 
 export function LoginScreen() {
   const [loading, setLoading] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
+  const [email, setEmail] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
 
   const loginWithGoogle = async () => {
     setLoading(true);
@@ -30,6 +35,25 @@ export function LoginScreen() {
       provider: "google",
       options: { redirectTo: window.location.origin },
     });
+  };
+
+  const sendCode = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+    if (error) setError("No se pudo enviar el código — intenta de nuevo");
+    else setCodeSent(true);
+    setLoading(false);
+  };
+
+  const verifyCode = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
+    if (error) setError("Código incorrecto o expirado");
+    setLoading(false);
   };
 
   return (
@@ -124,6 +148,48 @@ export function LoginScreen() {
         </button>
 
         {/* Divider */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "22px 0", color: "#6B6B6B", fontSize: 12 }}>
+          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,.08)" }} />
+          o
+          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,.08)" }} />
+        </div>
+
+        {/* Email OTP */}
+        {!showEmail ? (
+          <button onClick={() => setShowEmail(true)} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1px solid rgba(255,255,255,.1)", background: "transparent", color: "#A0A0A0", fontFamily: "inherit", fontSize: 14, cursor: "pointer" }}>
+            Continuar con correo
+          </button>
+        ) : !codeSent ? (
+          <form onSubmit={sendCode} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <input
+              type="email" placeholder="tu@correo.com" value={email} onChange={e => setEmail(e.target.value)} required autoFocus
+              style={{ padding: "11px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,.12)", background: "#1A1A1A", color: "#fff", fontFamily: "inherit", fontSize: 14, outline: "none" }}
+            />
+            {error && <div style={{ fontSize: 12.5, color: "#f87171" }}>{error}</div>}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" onClick={() => { setShowEmail(false); setError(""); }} style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,.1)", background: "transparent", color: "#6B6B6B", fontFamily: "inherit", fontSize: 13, cursor: "pointer" }}>← Volver</button>
+              <button type="submit" disabled={loading} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: "#2563FF", color: "#fff", fontFamily: "inherit", fontSize: 14, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1 }}>
+                {loading ? "Enviando..." : "Enviar código"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={verifyCode} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ fontSize: 13, color: "#A0A0A0", textAlign: "center" }}>Ingresa el código de 6 dígitos enviado a <strong style={{ color: "#fff" }}>{email}</strong></div>
+            <input
+              type="text" inputMode="numeric" placeholder="000000" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} required autoFocus maxLength={6}
+              style={{ padding: "13px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,.12)", background: "#1A1A1A", color: "#fff", fontFamily: "monospace", fontSize: 22, outline: "none", textAlign: "center", letterSpacing: "0.3em" }}
+            />
+            {error && <div style={{ fontSize: 12.5, color: "#f87171", textAlign: "center" }}>{error}</div>}
+            <button type="submit" disabled={loading || code.length < 6} style={{ padding: "12px", borderRadius: 10, border: "none", background: "#2563FF", color: "#fff", fontFamily: "inherit", fontSize: 14, fontWeight: 600, cursor: (loading || code.length < 6) ? "not-allowed" : "pointer", opacity: (loading || code.length < 6) ? 0.5 : 1 }}>
+              {loading ? "Verificando..." : "Entrar"}
+            </button>
+            <button type="button" onClick={() => { setCodeSent(false); setCode(""); setError(""); }} style={{ padding: "8px", background: "none", border: "none", color: "#6B6B6B", fontFamily: "inherit", fontSize: 12.5, cursor: "pointer" }}>
+              ← Cambiar correo
+            </button>
+          </form>
+        )}
+
         <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "22px 0", color: "#6B6B6B", fontSize: 12 }}>
           <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,.08)" }} />
           así de simple

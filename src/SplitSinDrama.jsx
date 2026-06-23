@@ -44,9 +44,13 @@ function parseBoleta(text) {
 }
 
 const STEPS = ["Cuenta", "Ajustes", "Reparto", "Resultado"];
-const SCAN_LIMIT = 3;
-const PRICE_CLP = 2990;
+const FREE_SCANS = 3;
 const MP_PAYMENT_LINK = "https://link.mercadopago.cl/donc3lla";
+const PACKS = [
+  { id: "starter", label: "Starter", scans: 5,  price: 990  },
+  { id: "popular", label: "Popular", scans: 15, price: 1990, highlight: true },
+  { id: "full",    label: "Full",    scans: 35, price: 3490 },
+];
 const PCOLORS = ['#2563FF','#9333EA','#2FB877','#E8B23A','#EC4899','#06B6D4','#F97316','#8B5CF6'];
 
 const fmtCLP = (n) => "$" + Math.round(n).toLocaleString("es-CL");
@@ -118,15 +122,15 @@ export default function SplitSinDrama({ user }) {
   const [copied, setCopied] = useState({});
   const [salaId, setSalaId] = useState(null);
   const [salaLoading, setSalaLoading] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
+  const [purchasedCredits, setPurchasedCredits] = useState(0);
   const fileRef = useRef();
   let toastTimer = useRef();
 
   useEffect(() => {
     supabase.from("scans").select("id", { count: "exact" }).eq("user_id", user.id)
       .then(({ count }) => setScanCount(count || 0));
-    supabase.from("subscriptions").select("id").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => { if (data) setSubscribed(true); });
+    supabase.from("subscriptions").select("credits").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => { if (data) setPurchasedCredits(data.credits || 0); });
   }, [user.id]);
 
   const showToast = (msg) => {
@@ -344,37 +348,48 @@ export default function SplitSinDrama({ user }) {
     });
   };
 
-  const scansLeft = subscribed ? Infinity : Math.max(0, SCAN_LIMIT - scanCount);
-  const limitReached = !subscribed && scanCount >= SCAN_LIMIT;
+  const totalScans = FREE_SCANS + purchasedCredits;
+  const scansLeft = Math.max(0, totalScans - scanCount);
+  const limitReached = scanCount >= totalScans;
 
   // ─── PAYWALL ──────────────────────────────────────────────
   const renderPaywall = () => (
     <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "32px 16px" }}>
-      <div style={{ width: 64, height: 64, borderRadius: 18, background: T.accentSoft, display: "grid", placeItems: "center", marginBottom: 20, color: T.accentHi }}>
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      <div style={{ width: 56, height: 56, borderRadius: 16, background: T.accentSoft, display: "grid", placeItems: "center", marginBottom: 18, color: T.accentHi }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </div>
-      <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 10 }}>Usaste tus 3 escaneos gratis</h2>
-      <p style={{ color: T.textDim, fontSize: 15, maxWidth: "38ch", marginBottom: 28, lineHeight: 1.6 }}>
-        Activa Split Sin Drama Pro y escanea todas las boletas que quieras — sin límite.
+      <h2 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 8 }}>Tus 3 escaneos gratis se acabaron</h2>
+      <p style={{ color: T.textDim, fontSize: 14.5, maxWidth: "36ch", marginBottom: 28, lineHeight: 1.6 }}>
+        Compra un pack de créditos — no vencen nunca, los usas cuando quieras.
       </p>
 
-      <div style={{ background: T.surface, border: `1px solid ${T.borderAccent}`, borderRadius: T.radius, padding: "24px 28px", marginBottom: 24, width: "100%", maxWidth: 360 }}>
-        <div style={{ fontSize: 13, color: T.textDim, marginBottom: 4 }}>Split Sin Drama Pro</div>
-        <div style={{ fontFamily: "monospace", fontSize: 36, fontWeight: 700, color: T.text, marginBottom: 4 }}>{fmtCLP(PRICE_CLP)}<span style={{ fontSize: 15, fontWeight: 400, color: T.textDim }}>/mes</span></div>
-        <div style={{ fontSize: 13, color: T.textFaint, marginBottom: 20 }}>Pago único mensual · cancela cuando quieras</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5, color: T.textDim, textAlign: "left", marginBottom: 20 }}>
-          {["✓ Escaneos ilimitados con IA", "✓ Sala compartida en tiempo real", "✓ Botón de pago Mercado Pago"].map(f => (
-            <div key={f}>{f}</div>
-          ))}
-        </div>
-        <a
-          href={`${MP_PAYMENT_LINK}?amount=${PRICE_CLP}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 20px", borderRadius: 10, background: "#009ee3", color: "#fff", fontFamily: "inherit", fontSize: 15, fontWeight: 700, textDecoration: "none" }}
-        >
-          Pagar {fmtCLP(PRICE_CLP)} con Mercado Pago
-        </a>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", maxWidth: 380, marginBottom: 16 }}>
+        {PACKS.map(pack => (
+          <a
+            key={pack.id}
+            href={`${MP_PAYMENT_LINK}?amount=${pack.price}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "16px 20px", borderRadius: T.radius, textDecoration: "none",
+              border: `1.5px solid ${pack.highlight ? T.borderAccent : T.border}`,
+              background: pack.highlight ? T.accentSoft : T.surface,
+              transition: ".15s",
+            }}
+          >
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{pack.scans} escaneos</div>
+              <div style={{ fontSize: 12.5, color: pack.highlight ? T.accentHi : T.textFaint, marginTop: 2 }}>
+                {pack.highlight ? "⭐ Más popular" : `${fmtCLP(Math.round(pack.price / pack.scans))}/scan`}
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 700, color: pack.highlight ? T.accentHi : T.text }}>{fmtCLP(pack.price)}</div>
+              <div style={{ background: "#009ee3", color: "#fff", borderRadius: 8, padding: "6px 12px", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>Pagar</div>
+            </div>
+          </a>
+        ))}
       </div>
     </div>
   );
