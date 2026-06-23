@@ -217,6 +217,17 @@ export default function SalaView({ sessionId }) {
                 <span style={{ fontSize: 16, fontWeight: 700 }}>Tu total</span>
                 <span style={{ fontSize: 18, fontFamily: "monospace", fontWeight: 700, color: T.accentHi }}>{fmtCLP(per[myMemberId]?.final || 0)}</span>
               </div>
+              {(per[myMemberId]?.final || 0) > 0 && (
+                <a
+                  href={`https://link.mercadopago.cl/donc3lla?amount=${Math.round(per[myMemberId]?.final || 0)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 16px", borderRadius: 10, background: "#009ee3", color: "#fff", fontFamily: "inherit", fontSize: 14, fontWeight: 600, textDecoration: "none" }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" fill="currentColor" opacity=".2"/><path d="M8 12h8M12 8l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  Pagar {fmtCLP(per[myMemberId]?.final || 0)} con Mercado Pago
+                </a>
+              )}
             </div>
 
             {/* Resumen todos */}

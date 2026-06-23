@@ -820,10 +820,21 @@ export default function SplitSinDrama({ user }) {
                     </>
                   )}
                 </div>
-                <button onClick={() => copyPerson(m)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13.5, fontWeight: 600, padding: 10, borderRadius: 10, cursor: "pointer", fontFamily: "inherit", border: `1px solid ${isCopied ? "rgba(37,211,102,.5)" : T.border}`, background: isCopied ? "rgba(37,211,102,.16)" : T.surface2, color: isCopied ? "#25D366" : T.textDim, transition: ".18s" }}>
-                  {isCopied ? <CheckIcon /> : <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                  {isCopied ? "¡Copiado!" : "Copiar para WhatsApp"}
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <button onClick={() => copyPerson(m)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13.5, fontWeight: 600, padding: 10, borderRadius: 10, cursor: "pointer", fontFamily: "inherit", border: `1px solid ${isCopied ? "rgba(37,211,102,.5)" : T.border}`, background: isCopied ? "rgba(37,211,102,.16)" : T.surface2, color: isCopied ? "#25D366" : T.textDim, transition: ".18s" }}>
+                    {isCopied ? <CheckIcon /> : <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    {isCopied ? "¡Copiado!" : "Copiar para WhatsApp"}
+                  </button>
+                  <a
+                    href={`https://link.mercadopago.cl/donc3lla?amount=${Math.round(d.final)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13.5, fontWeight: 600, padding: 10, borderRadius: 10, cursor: "pointer", fontFamily: "inherit", border: "none", background: "#009ee3", color: "#fff", textDecoration: "none", boxSizing: "border-box" }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" fill="currentColor" opacity=".2"/><path d="M8 12h8M12 8l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Pagar {fmtCLP(d.final)} con Mercado Pago
+                  </a>
+                </div>
               </div>
             );
           })}
