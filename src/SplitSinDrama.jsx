@@ -453,7 +453,10 @@ export default function SplitSinDrama({ user }) {
                 <div style={{ position: "absolute", left: 0, right: 0, height: 36, background: "linear-gradient(transparent, rgba(37,99,255,.28), transparent)", borderTop: `1.5px solid ${T.accentHi}`, animation: "scan 1.3s cubic-bezier(.22,.61,.36,1) infinite" }} />
               </div>
               <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Leyendo la boleta…</h3>
-              <p style={{ color: T.textDim, fontSize: 13.5 }}>La IA está reconociendo los ítems y precios</p>
+              <p style={{ color: T.textDim, fontSize: 13.5, marginBottom: 16 }}>La IA está reconociendo los ítems y precios</p>
+              <button onClick={() => { setAiLoading(false); setImgPreview(null); setItems([]); setScanDone(false); if (fileRef.current) fileRef.current.value = ""; }} style={{ fontSize: 13, color: T.textDim, padding: "8px 16px", borderRadius: 9, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", fontFamily: "inherit" }}>
+                Cancelar
+              </button>
             </div>
           ) : (
             <>
