@@ -44,7 +44,7 @@ function parseBoleta(text) {
 }
 
 const STEPS = ["Cuenta", "Ajustes", "Reparto", "Resultado"];
-const FREE_SCANS = 3;
+const FREE_SCANS = 99999;
 const MP_PAYMENT_LINK = "https://link.mercadopago.cl/donc3lla";
 const PACKS = [
   { id: "starter", label: "Starter", scans: 5,  price: 990  },

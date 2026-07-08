@@ -21,6 +21,12 @@ export function useAuth() {
   return { user, loading };
 }
 
+const STEPS = [
+  { emoji: "📸", text: "Foto a la boleta" },
+  { emoji: "🤖", text: "La IA lee cada ítem" },
+  { emoji: "✅", text: "Cada uno paga lo suyo" },
+];
+
 export function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
@@ -61,69 +67,89 @@ export function LoginScreen() {
       fontFamily: "'Geist', 'Inter', system-ui, sans-serif",
       minHeight: "100dvh",
       background: "#0A0A0A",
-      display: "grid",
-      placeItems: "center",
-      padding: "24px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      padding: "0 20px 48px",
       position: "relative",
       overflow: "hidden",
     }}>
       {/* Backdrop glow */}
-      <div style={{
-        position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden",
-      }}>
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
         <div style={{
-          position: "absolute", left: "50%", top: "-10%",
+          position: "absolute", left: "50%", top: "-15%",
           transform: "translateX(-50%)",
-          width: "min(900px, 120vw)", aspectRatio: "1", borderRadius: "50%",
-          background: "radial-gradient(closest-side, rgba(37,99,255,.13), transparent 70%)",
-          filter: "blur(10px)",
+          width: "min(1000px, 140vw)", aspectRatio: "1", borderRadius: "50%",
+          background: "radial-gradient(closest-side, rgba(37,99,255,.15), transparent 70%)",
+          filter: "blur(12px)",
         }} />
       </div>
 
+      {/* Nav */}
+      <div style={{ width: "100%", maxWidth: 520, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0", position: "relative", zIndex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+            background: "linear-gradient(150deg, #2563FF, #1843B8)",
+            boxShadow: "0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 12px -3px rgba(37,99,255,.5)",
+            display: "grid", placeItems: "center",
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3v18" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M5 8.5 9 12l-4 3.5" stroke="rgba(255,255,255,.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M19 8.5 15 12l4 3.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-.02em", color: "#fff" }}>Split <span style={{ color: "#4F82FF" }}>Sin Drama</span></span>
+        </div>
+        <span style={{ fontSize: 12, color: "#555", background: "#141414", border: "1px solid #222", borderRadius: 99, padding: "4px 10px" }}>Gratis · Sin tarjeta</span>
+      </div>
+
+      {/* Hero */}
+      <div style={{ width: "100%", maxWidth: 520, textAlign: "center", padding: "40px 0 36px", position: "relative", zIndex: 1 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(37,99,255,.12)", border: "1px solid rgba(37,99,255,.25)", borderRadius: 99, padding: "5px 14px", fontSize: 12.5, color: "#4F82FF", fontWeight: 600, marginBottom: 22 }}>
+          ✨ Powered by inteligencia artificial
+        </div>
+        <h1 style={{ fontSize: "clamp(30px, 7vw, 44px)", fontWeight: 800, letterSpacing: "-.04em", lineHeight: 1.1, color: "#FAFAFA", marginBottom: 18 }}>
+          Divide la cuenta<br/>
+          <span style={{ color: "#4F82FF" }}>sin pelear</span> con nadie.
+        </h1>
+        <p style={{ color: "#888", fontSize: 16, lineHeight: 1.7, maxWidth: "36ch", margin: "0 auto 32px" }}>
+          Saca la foto de la boleta, marca lo que comiste y listo — cada uno sabe exactamente cuánto pagar. Sin calculadoras, sin drama.
+        </p>
+
+        {/* Steps */}
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 40 }}>
+          {STEPS.map((s, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, background: "#141414", border: "1px solid #222", borderRadius: 99, padding: "7px 14px", fontSize: 13, color: "#aaa" }}>
+              <span>{s.emoji}</span> {s.text}
+              {i < STEPS.length - 1 && <span style={{ color: "#333", marginLeft: 4 }}>→</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Card */}
       <div style={{
-        width: "100%", maxWidth: 418, position: "relative", zIndex: 1,
+        width: "100%", maxWidth: 420, position: "relative", zIndex: 1,
         background: "linear-gradient(180deg, #171717, #121212)",
         border: "1px solid rgba(255,255,255,.08)",
         borderRadius: 22,
-        padding: "44px 40px 32px",
-        boxShadow: "0 1px 0 rgba(255,255,255,.04) inset, 0 40px 80px -28px rgba(0,0,0,.8)",
+        padding: "36px 32px 28px",
+        boxShadow: "0 1px 0 rgba(255,255,255,.04) inset, 0 40px 80px -28px rgba(0,0,0,.9)",
       }}>
         {/* Top blue border gradient */}
         <div style={{
           position: "absolute", inset: -1, borderRadius: "inherit",
-          background: "linear-gradient(180deg, rgba(37,99,255,.4), transparent 38%)",
+          background: "linear-gradient(180deg, rgba(37,99,255,.45), transparent 35%)",
           WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
           WebkitMaskComposite: "xor",
           maskComposite: "exclude",
           padding: 1, pointerEvents: "none",
         }} />
 
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 26 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-            background: "linear-gradient(150deg, #2563FF, #1843B8)",
-            boxShadow: "0 0 0 1px rgba(255,255,255,.08) inset, 0 6px 18px -4px rgba(37,99,255,.45)",
-            display: "grid", placeItems: "center",
-          }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M12 3v18" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M5 8.5 9 12l-4 3.5" stroke="rgba(255,255,255,.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M19 8.5 15 12l4 3.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-.02em" }}>
-            <span style={{ color: "#fff" }}>Split</span>{" "}
-            <span style={{ color: "#4F82FF" }}>Sin Drama</span>
-          </div>
-        </div>
-
-        <h1 style={{ fontSize: 25, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 9, lineHeight: 1.18, color: "#FAFAFA" }}>
-          Divide la cuenta<br/>sin pelear con nadie.
-        </h1>
-        <p style={{ color: "#A0A0A0", fontSize: 14.5, marginBottom: 30, maxWidth: "33ch" }}>
-          Súbele la foto a la boleta, la IA saca los ítems y cada uno paga lo justo. Listo en 30 segundos.
-        </p>
+        <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-.03em", color: "#fff", marginBottom: 6 }}>Empieza gratis ahora</h2>
+        <p style={{ color: "#666", fontSize: 13.5, marginBottom: 24 }}>Sin tarjeta. Sin suscripción. Entra en 10 segundos.</p>
 
         {/* Google button */}
         <button
@@ -136,7 +162,7 @@ export function LoginScreen() {
             boxShadow: "0 1px 2px rgba(0,0,0,.3)",
             opacity: loading ? 0.6 : 1,
             fontFamily: "inherit",
-            transition: "filter .2s, box-shadow .25s",
+            transition: "filter .2s",
           }}>
           <svg width="18" height="18" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1Z"/>
@@ -148,15 +174,15 @@ export function LoginScreen() {
         </button>
 
         {/* Divider */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "22px 0", color: "#6B6B6B", fontSize: 12 }}>
-          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,.08)" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "18px 0", color: "#444", fontSize: 12 }}>
+          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,.07)" }} />
           o
-          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,.08)" }} />
+          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,.07)" }} />
         </div>
 
         {/* Email OTP */}
         {!showEmail ? (
-          <button onClick={() => setShowEmail(true)} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1px solid rgba(255,255,255,.1)", background: "transparent", color: "#A0A0A0", fontFamily: "inherit", fontSize: 14, cursor: "pointer" }}>
+          <button onClick={() => setShowEmail(true)} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1px solid rgba(255,255,255,.1)", background: "transparent", color: "#888", fontFamily: "inherit", fontSize: 14, cursor: "pointer" }}>
             Continuar con correo
           </button>
         ) : !codeSent ? (
@@ -167,7 +193,7 @@ export function LoginScreen() {
             />
             {error && <div style={{ fontSize: 12.5, color: "#f87171" }}>{error}</div>}
             <div style={{ display: "flex", gap: 8 }}>
-              <button type="button" onClick={() => { setShowEmail(false); setError(""); }} style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,.1)", background: "transparent", color: "#6B6B6B", fontFamily: "inherit", fontSize: 13, cursor: "pointer" }}>← Volver</button>
+              <button type="button" onClick={() => { setShowEmail(false); setError(""); }} style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,.1)", background: "transparent", color: "#666", fontFamily: "inherit", fontSize: 13, cursor: "pointer" }}>← Volver</button>
               <button type="submit" disabled={loading} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: "#2563FF", color: "#fff", fontFamily: "inherit", fontSize: 14, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1 }}>
                 {loading ? "Enviando..." : "Enviar código"}
               </button>
@@ -175,7 +201,7 @@ export function LoginScreen() {
           </form>
         ) : (
           <form onSubmit={verifyCode} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ fontSize: 13, color: "#A0A0A0", textAlign: "center" }}>Ingresa el código de 6 dígitos enviado a <strong style={{ color: "#fff" }}>{email}</strong></div>
+            <div style={{ fontSize: 13, color: "#888", textAlign: "center" }}>Código enviado a <strong style={{ color: "#fff" }}>{email}</strong></div>
             <input
               type="text" inputMode="numeric" placeholder="000000" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} required autoFocus maxLength={6}
               style={{ padding: "13px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,.12)", background: "#1A1A1A", color: "#fff", fontFamily: "monospace", fontSize: 22, outline: "none", textAlign: "center", letterSpacing: "0.3em" }}
@@ -184,40 +210,32 @@ export function LoginScreen() {
             <button type="submit" disabled={loading || code.length < 6} style={{ padding: "12px", borderRadius: 10, border: "none", background: "#2563FF", color: "#fff", fontFamily: "inherit", fontSize: 14, fontWeight: 600, cursor: (loading || code.length < 6) ? "not-allowed" : "pointer", opacity: (loading || code.length < 6) ? 0.5 : 1 }}>
               {loading ? "Verificando..." : "Entrar"}
             </button>
-            <button type="button" onClick={() => { setCodeSent(false); setCode(""); setError(""); }} style={{ padding: "8px", background: "none", border: "none", color: "#6B6B6B", fontFamily: "inherit", fontSize: 12.5, cursor: "pointer" }}>
+            <button type="button" onClick={() => { setCodeSent(false); setCode(""); setError(""); }} style={{ padding: "8px", background: "none", border: "none", color: "#555", fontFamily: "inherit", fontSize: 12.5, cursor: "pointer" }}>
               ← Cambiar correo
             </button>
           </form>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "22px 0", color: "#6B6B6B", fontSize: 12 }}>
-          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,.08)" }} />
-          así de simple
-          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,.08)" }} />
-        </div>
-
-        <div style={{ textAlign: "center", color: "#6B6B6B", fontSize: 12.5, lineHeight: 1.6 }}>
+        <p style={{ textAlign: "center", color: "#444", fontSize: 12, marginTop: 20, lineHeight: 1.6 }}>
           Al continuar aceptas los{" "}
-          <a href="#" style={{ color: "#A0A0A0", textDecoration: "none", borderBottom: "1px solid rgba(255,255,255,.14)" }}>Términos</a>
+          <a href="#" style={{ color: "#666", textDecoration: "none", borderBottom: "1px solid #333" }}>Términos</a>
           {" "}y la{" "}
-          <a href="#" style={{ color: "#A0A0A0", textDecoration: "none", borderBottom: "1px solid rgba(255,255,255,.14)" }}>Privacidad</a>.
-          <br/>Sin tarjetas, sin cuentas, sin dramas.
-        </div>
+          <a href="#" style={{ color: "#666", textDecoration: "none", borderBottom: "1px solid #333" }}>Privacidad</a>.
+        </p>
+      </div>
 
-        {/* Badges */}
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
-          {["IA lee la boleta", "Pesos chilenos", "Copia a WhatsApp"].map(label => (
-            <span key={label} style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              fontSize: 11.5, color: "#A0A0A0",
-              background: "#1A1A1A", border: "1px solid rgba(255,255,255,.08)",
-              padding: "6px 11px", borderRadius: 99,
-            }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                <path d="m5 13 4 4L19 7" stroke="#4F82FF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {label}
-            </span>
+      {/* Social proof */}
+      <div style={{ position: "relative", zIndex: 1, marginTop: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center" }}>
+          {[
+            { n: "30 seg", label: "para dividir la cuenta" },
+            { n: "100%", label: "gratis para empezar" },
+            { n: "0", label: "calculadoras necesarias" },
+          ].map(({ n, label }) => (
+            <div key={n} style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: "-.03em" }}>{n}</div>
+              <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{label}</div>
+            </div>
           ))}
         </div>
       </div>
