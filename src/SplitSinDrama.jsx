@@ -221,25 +221,33 @@ export default function SplitSinDrama({ user }) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30000);
-      let res;
-      try {
-        res = await fetch("/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ base64, mimeType }),
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timeout);
-      }
-      const data = await res.json();
-      if (!res.ok) { showToast("Error al leer la boleta — intenta de nuevo"); setAiLoading(false); return; }
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base64, mimeType }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeout));
 
+      if (!res.ok) {
+        showToast("Error al leer la boleta — intenta de nuevo");
+        setAiLoading(false);
+        return;
+      }
+
+      const data = await res.json();
       const text = (data.content || []).map(b => b.text || "").join("").trim();
       console.log("Respuesta IA:", text.slice(0, 400));
-      // Limpiar posibles backticks de markdown
       const clean = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
-      const parsed = JSON.parse(clean);
+
+      let parsed;
+      try {
+        parsed = JSON.parse(clean);
+      } catch {
+        showToast("No se pudo leer la boleta — intenta con otra foto");
+        setAiLoading(false);
+        return;
+      }
+
       if (parsed.items?.length > 0) {
         await supabase.from("scans").insert({ user_id: user.id });
         setScanCount(c => c + 1);
@@ -255,9 +263,11 @@ export default function SplitSinDrama({ user }) {
       }
     } catch (e) {
       console.error(e);
-      showToast("Error al procesar — intenta de nuevo");
+      const msg = e.name === "AbortError" ? "Tiempo de espera agotado — intenta de nuevo" : "Error al procesar — intenta de nuevo";
+      showToast(msg);
+    } finally {
+      setAiLoading(false);
     }
-    setAiLoading(false);
   }, [scanCount, user.id]);
 
   const processFile = useCallback(async (file) => {
