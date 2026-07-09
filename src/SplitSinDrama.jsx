@@ -547,7 +547,8 @@ export default function SplitSinDrama({ user }) {
         </>
       )}
 
-      <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => processFile(e.target.files[0])} />
+      <label htmlFor="file-upload" style={{ display: "none" }} />
+      <input id="file-upload" ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { processFile(e.target.files[0]); e.target.value = ""; }} />
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 14, marginTop: 28 }}>
         <button style={{ ...btnPrimary, opacity: items.length === 0 ? 0.4 : 1, cursor: items.length === 0 ? "not-allowed" : "pointer" }} onClick={() => items.length > 0 && setStep(1)}>
