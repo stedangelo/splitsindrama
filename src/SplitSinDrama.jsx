@@ -228,6 +228,7 @@ export default function SplitSinDrama({ user }) {
         signal: controller.signal,
       }).finally(() => clearTimeout(timeout));
 
+      showToast(`API respondió: ${res.status}`);
       if (!res.ok) {
         showToast("Error al leer la boleta — intenta de nuevo");
         setAiLoading(false);
