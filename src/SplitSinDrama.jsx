@@ -281,12 +281,20 @@ export default function SplitSinDrama({ user }) {
     try {
       let blob = file;
       if (isHeic) {
+        showToast("Convirtiendo HEIC…");
         blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
         if (Array.isArray(blob)) blob = blob[0];
       }
 
-      // createImageBitmap with imageOrientation applies EXIF rotation automatically
-      const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
+      showToast("Procesando imagen…");
+      let bitmap;
+      try {
+        bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
+      } catch {
+        // Safari/iOS fallback sin imageOrientation
+        bitmap = await createImageBitmap(blob);
+      }
+
       const MAX = 1800;
       let w = bitmap.width, h = bitmap.height;
       if (w > MAX || h > MAX) {
@@ -296,16 +304,16 @@ export default function SplitSinDrama({ user }) {
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext("2d");
-      // Boost contrast and saturation to help AI read low-quality receipt photos
       ctx.filter = "contrast(1.4) brightness(1.1) saturate(0.2)";
       ctx.drawImage(bitmap, 0, 0, w, h);
       bitmap.close();
       const jpeg = canvas.toDataURL("image/jpeg", 0.95);
-      setImgPreview(canvas.toDataURL("image/jpeg", 0.7)); // preview at lower quality
+      setImgPreview(canvas.toDataURL("image/jpeg", 0.7));
+      showToast("Enviando a la IA…");
       analyzeImage(jpeg.split(",")[1], "image/jpeg");
     } catch (err) {
       console.error("Error procesando imagen:", err);
-      showToast("No se pudo leer la imagen — intenta con otra foto");
+      showToast(`Error: ${err.message || "No se pudo leer la imagen"}`);
       setAiLoading(false);
     }
   }, [analyzeImage]);
