@@ -1,6 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "./supabase";
 import heic2any from "heic2any";
+import {
+  FREE_MONTHLY_SCANS, PLANS, PRO_BENEFITS,
+  checkoutUrl, isProActive, startOfMonthISO, formatRenewal,
+} from "./subscription";
 
 // Parsea el texto OCR de una boleta chilena
 function parseBoleta(text) {
@@ -44,13 +48,6 @@ function parseBoleta(text) {
 }
 
 const STEPS = ["Cuenta", "Ajustes", "Reparto", "Resultado"];
-const FREE_SCANS = 99999;
-const MP_PAYMENT_LINK = "https://link.mercadopago.cl/donc3lla";
-const PACKS = [
-  { id: "starter", label: "Starter", scans: 5,  price: 990  },
-  { id: "popular", label: "Popular", scans: 15, price: 1990, highlight: true },
-  { id: "full",    label: "Full",    scans: 35, price: 3490 },
-];
 const PCOLORS = ['#2563FF','#9333EA','#2FB877','#E8B23A','#EC4899','#06B6D4','#F97316','#8B5CF6'];
 
 const fmtCLP = (n) => "$" + Math.round(n).toLocaleString("es-CL");
@@ -122,16 +119,38 @@ export default function SplitSinDrama({ user }) {
   const [copied, setCopied] = useState({});
   const [salaId, setSalaId] = useState(null);
   const [salaLoading, setSalaLoading] = useState(false);
-  const [purchasedCredits, setPurchasedCredits] = useState(0);
+  const [subscription, setSubscription] = useState(null);
+  const [showPlans, setShowPlans] = useState(false);
+  const [billing, setBilling] = useState("annual");
   const fileRef = useRef();
   let toastTimer = useRef();
 
-  useEffect(() => {
-    supabase.from("scans").select("id", { count: "exact" }).eq("user_id", user.id)
+  // Cuenta los escaneos del mes actual (el límite Free se reinicia cada mes).
+  const loadScanCount = useCallback(() => {
+    supabase.from("scans")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", startOfMonthISO())
       .then(({ count }) => setScanCount(count || 0));
-    supabase.from("subscriptions").select("credits").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => { if (data) setPurchasedCredits(data.credits || 0); });
   }, [user.id]);
+
+  // Carga el estado de la suscripción (plan, vigencia) desde Supabase.
+  // Si el plan Pro ya está activo, cierra la pantalla de planes.
+  const loadSubscription = useCallback(() => {
+    supabase.from("subscriptions")
+      .select("plan, status, billing, current_period_end")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setSubscription(data || null);
+        if (isProActive(data)) setShowPlans(false);
+      });
+  }, [user.id]);
+
+  useEffect(() => {
+    loadScanCount();
+    loadSubscription();
+  }, [loadScanCount, loadSubscription]);
 
   const showToast = (msg) => {
     clearTimeout(toastTimer.current);
@@ -215,7 +234,7 @@ export default function SplitSinDrama({ user }) {
 
   // Scan con Groq vision IA
   const analyzeImage = useCallback(async (base64, mimeType) => {
-    if (scanCount >= SCAN_LIMIT) return;
+    if (!isProActive(subscription) && scanCount >= FREE_MONTHLY_SCANS) return;
     setAiLoading(true);
     setScanDone(false);
     try {
@@ -269,7 +288,7 @@ export default function SplitSinDrama({ user }) {
     } finally {
       setAiLoading(false);
     }
-  }, [scanCount, user.id]);
+  }, [scanCount, user.id, subscription]);
 
   const processFile = useCallback(async (file) => {
     if (!file) return;
@@ -375,51 +394,104 @@ export default function SplitSinDrama({ user }) {
     });
   };
 
-  const totalScans = FREE_SCANS + purchasedCredits;
-  const scansLeft = Math.max(0, totalScans - scanCount);
-  const limitReached = scanCount >= totalScans;
+  const isPro = isProActive(subscription);
+  const scansLeft = Math.max(0, FREE_MONTHLY_SCANS - scanCount);
+  const limitReached = !isPro && scanCount >= FREE_MONTHLY_SCANS;
 
-  // ─── PAYWALL ──────────────────────────────────────────────
-  const renderPaywall = () => (
-    <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "32px 16px" }}>
-      <div style={{ width: 56, height: 56, borderRadius: 16, background: T.accentSoft, display: "grid", placeItems: "center", marginBottom: 18, color: T.accentHi }}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-      </div>
-      <h2 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 8 }}>Tus 3 escaneos gratis se acabaron</h2>
-      <p style={{ color: T.textDim, fontSize: 14.5, maxWidth: "36ch", marginBottom: 28, lineHeight: 1.6 }}>
-        Compra un pack de créditos — no vencen nunca, los usas cuando quieras.
-      </p>
+  // Refresca suscripción y contador (tras volver del checkout de Mercado Pago).
+  const refreshStatus = () => {
+    loadSubscription();
+    loadScanCount();
+    showToast("Actualizando tu plan…");
+  };
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", maxWidth: 380, marginBottom: 16 }}>
-        {PACKS.map(pack => (
+  // ─── PLANES / PAYWALL (suscripción recurrente) ────────────
+  const renderPaywall = () => {
+    const plan = PLANS[billing];
+    const monthly = billing === "annual" ? PLANS.annual.monthlyEquivalent : PLANS.monthly.price;
+    return (
+      <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "32px 16px" }}>
+        {!limitReached && (
+          <button onClick={() => setShowPlans(false)} style={{ ...btnGhost, alignSelf: "flex-start", padding: "8px 14px", marginBottom: 8 }}>
+            <ArrowLeft /> Volver
+          </button>
+        )}
+
+        <div style={{ width: 56, height: 56, borderRadius: 16, background: T.accentSoft, display: "grid", placeItems: "center", marginBottom: 18, color: T.accentHi }}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+        <h2 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 8 }}>
+          {limitReached ? "Llegaste al límite gratis del mes" : "Hazte Pro"}
+        </h2>
+        <p style={{ color: T.textDim, fontSize: 14.5, maxWidth: "40ch", marginBottom: 24, lineHeight: 1.6 }}>
+          {limitReached
+            ? `Usaste tus ${FREE_MONTHLY_SCANS} escaneos gratis de este mes. Suscríbete a Pro y divide cuentas sin límites.`
+            : "Escaneos ilimitados, salas sin límite y sin marca de agua. Cancela cuando quieras."}
+        </p>
+
+        {/* Toggle Mensual / Anual */}
+        <div style={{ display: "inline-flex", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 999, padding: 4, marginBottom: 22 }}>
+          {Object.values(PLANS).map(p => {
+            const active = billing === p.id;
+            return (
+              <button key={p.id} onClick={() => setBilling(p.id)} style={{
+                display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 18px", borderRadius: 999,
+                border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13.5, fontWeight: 600,
+                background: active ? T.accent : "transparent", color: active ? "#fff" : T.textDim,
+                boxShadow: active ? `0 4px 12px -2px ${T.accentGlow}` : "none", transition: ".2s",
+              }}>
+                {p.label}
+                {p.badge && (
+                  <span style={{ fontSize: 10.5, fontWeight: 700, background: active ? "rgba(255,255,255,.22)" : "rgba(47,184,119,.16)", color: active ? "#fff" : T.ok, borderRadius: 6, padding: "2px 6px" }}>
+                    {p.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tarjeta del plan seleccionado */}
+        <div style={{ width: "100%", maxWidth: 400, border: `1.5px solid ${T.borderAccent}`, background: T.accentSoft, borderRadius: T.radiusLg, padding: "26px 24px", marginBottom: 16, textAlign: "left" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontFamily: "monospace", fontSize: 34, fontWeight: 800, color: T.text, letterSpacing: "-.02em" }}>{fmtCLP(monthly)}</span>
+            <span style={{ fontSize: 14, color: T.textDim }}>/mes</span>
+          </div>
+          <div style={{ fontSize: 13, color: T.accentHi, marginBottom: 20 }}>
+            {billing === "annual"
+              ? `${fmtCLP(plan.price)} al año · ${plan.tagline}`
+              : plan.tagline}
+          </div>
+
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 22px", display: "flex", flexDirection: "column", gap: 11 }}>
+            {PRO_BENEFITS.map(b => (
+              <li key={b} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: T.text }}>
+                <span style={{ color: T.ok, flexShrink: 0, display: "grid", placeItems: "center" }}><CheckIcon /></span>
+                {b}
+              </li>
+            ))}
+          </ul>
+
           <a
-            key={pack.id}
-            href={`${MP_PAYMENT_LINK}?amount=${pack.price}`}
+            href={checkoutUrl(billing, user.id)}
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderRadius: T.radius, textDecoration: "none",
-              border: `1.5px solid ${pack.highlight ? T.borderAccent : T.border}`,
-              background: pack.highlight ? T.accentSoft : T.surface,
-              transition: ".15s",
-            }}
+            style={{ ...btnPrimary, width: "100%", justifyContent: "center", fontSize: 15.5, padding: "14px 20px", textDecoration: "none" }}
           >
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{pack.scans} escaneos</div>
-              <div style={{ fontSize: 12.5, color: pack.highlight ? T.accentHi : T.textFaint, marginTop: 2 }}>
-                {pack.highlight ? "⭐ Más popular" : `${fmtCLP(Math.round(pack.price / pack.scans))}/scan`}
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 700, color: pack.highlight ? T.accentHi : T.text }}>{fmtCLP(pack.price)}</div>
-              <div style={{ background: "#009ee3", color: "#fff", borderRadius: 8, padding: "6px 12px", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>Pagar</div>
-            </div>
+            Suscribirme con Mercado Pago
+            <ArrowRight />
           </a>
-        ))}
+        </div>
+
+        <button onClick={refreshStatus} style={{ ...btnGhost, padding: "9px 16px", fontSize: 13 }}>
+          Ya pagué — actualizar mi plan
+        </button>
+        <p style={{ color: T.textFaint, fontSize: 12, marginTop: 14, maxWidth: "40ch", lineHeight: 1.5 }}>
+          Pago seguro con Mercado Pago. La suscripción se renueva automáticamente y puedes cancelarla cuando quieras.
+        </p>
       </div>
-    </div>
-  );
+    );
+  };
 
   // ─── STEP 0: CUENTA ───────────────────────────────────────
   const renderCuenta = () => (
@@ -454,10 +526,10 @@ export default function SplitSinDrama({ user }) {
             </svg>
           </div>
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 6, color: T.text }}>
-            {limitReached ? "Alcanzaste el límite de 3 escaneos gratis" : "Arrastra la foto de la boleta"}
+            {limitReached ? `Usaste tus ${FREE_MONTHLY_SCANS} escaneos gratis del mes` : "Arrastra la foto de la boleta"}
           </h3>
           <p style={{ color: T.textDim, fontSize: 13.5 }}>
-            {limitReached ? "Próximamente plan premium" : "o haz clic para tomar una foto"}
+            {limitReached ? "Hazte Pro para escaneos ilimitados" : "o haz clic para tomar una foto"}
           </p>
           {!limitReached && (
             <div style={{ color: T.textFaint, fontSize: 12, marginTop: 14 }}>
@@ -465,7 +537,7 @@ export default function SplitSinDrama({ user }) {
               {["JPG", "PNG", "HEIC"].map(f => (
                 <span key={f} style={{ display: "inline-block", background: T.surface3, border: `1px solid ${T.border}`, borderRadius: 6, padding: "1px 7px", fontSize: 11.5, color: T.textDim, marginLeft: 4 }}>{f}</span>
               ))}
-              {" "}· máx 10 MB · <span style={{ color: scansLeft <= 1 ? T.warn : T.textFaint }}>{scansLeft} escaneo{scansLeft !== 1 ? "s" : ""} restante{scansLeft !== 1 ? "s" : ""}</span>
+              {" "}· máx 10 MB · <span style={{ color: isPro ? T.ok : scansLeft <= 1 ? T.warn : T.textFaint }}>{isPro ? "escaneos ilimitados" : `${scansLeft} escaneo${scansLeft !== 1 ? "s" : ""} restante${scansLeft !== 1 ? "s" : ""} este mes`}</span>
             </div>
           )}
         </div>
@@ -961,6 +1033,13 @@ export default function SplitSinDrama({ user }) {
             <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-.02em" }}>Split <span style={{ color: T.accentHi }}>Sin Drama</span></div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            {isPro ? (
+              <span title={subscription?.current_period_end ? `Renueva el ${formatRenewal(subscription.current_period_end)}` : "Plan Pro activo"} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".04em", color: "#fff", background: "linear-gradient(135deg, #2F6BFF, #9333EA)", borderRadius: 999, padding: "4px 11px", boxShadow: `0 4px 12px -3px ${T.accentGlow}`, cursor: "default" }}>PRO</span>
+            ) : (
+              <button onClick={() => { setStep(0); setShowPlans(true); }} style={{ fontSize: 12.5, fontWeight: 600, color: T.accentHi, background: T.accentSoft, border: `1px solid ${T.borderAccent}`, borderRadius: 999, padding: "5px 13px", cursor: "pointer", fontFamily: "inherit" }}>
+                ✦ Hazte Pro
+              </button>
+            )}
             <span style={{ fontSize: 13.5, fontWeight: 500, color: T.textDim }}>{userName}</span>
             <button onClick={() => supabase.auth.signOut()} style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg, #2F6BFF, #9333EA)", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700, color: "#fff", border: `1px solid ${T.borderStrong}`, cursor: "pointer" }}>
               {userInitials}
@@ -990,7 +1069,7 @@ export default function SplitSinDrama({ user }) {
       {/* Content */}
       <main style={{ maxWidth: 880, margin: "0 auto", width: "100%", padding: "clamp(26px, 5vw, 46px) clamp(18px, 4vw, 28px) 120px", flex: 1, position: "relative", zIndex: 1 }}>
         <div style={{ animation: "fade .45s cubic-bezier(.22,.61,.36,1)" }} key={step}>
-          {limitReached && step === 0 ? renderPaywall() : panels[step]()}
+          {(limitReached || showPlans) && step === 0 ? renderPaywall() : panels[step]()}
         </div>
       </main>
 
