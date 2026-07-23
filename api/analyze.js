@@ -16,13 +16,10 @@ export default async function handler(req, res) {
     body: JSON.stringify({
       model: "qwen/qwen3.6-27b",
       max_tokens: 1200,
+      response_format: { type: "json_object" },
       messages: [{
         role: "user",
         content: [
-          {
-            type: "image_url",
-            image_url: { url: `data:${mimeType};base64,${base64}` }
-          },
           {
             type: "text",
             text: `Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Puede estar en formato ticket de papel o boleta electrónica tributaria con columnas. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
@@ -43,6 +40,10 @@ Reglas para propina/descuento:
 - propina: porcentaje numérico (ej. 10 para 10%). 0 si no hay. Busca "PROPINA SUGERIDA X%" o similar.
 - descuento: si hay filas de "Descuento %X" aplicadas a cada ítem, captura ese porcentaje aquí. 0 si no hay.
 - descMode: "subtotal" si la propina se calcula sobre el monto original antes del descuento; "total" si no hay descuento o la propina va sobre el total final.`
+          },
+          {
+            type: "image_url",
+            image_url: { url: `data:${mimeType};base64,${base64}` }
           }
         ]
       }]
