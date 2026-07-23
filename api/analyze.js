@@ -27,7 +27,7 @@ Reglas para propina/descuento:
 - descMode: "subtotal" si la propina se calcula sobre el monto original antes del descuento; "total" si no hay descuento o la propina va sobre el total final.`;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
