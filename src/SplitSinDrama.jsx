@@ -228,7 +228,6 @@ export default function SplitSinDrama({ user }) {
         signal: controller.signal,
       }).finally(() => clearTimeout(timeout));
 
-      showToast(`API respondió: ${res.status}`);
       if (!res.ok) {
         showToast("Error al leer la boleta — intenta de nuevo");
         setAiLoading(false);
@@ -282,12 +281,10 @@ export default function SplitSinDrama({ user }) {
     try {
       let blob = file;
       if (isHeic) {
-        showToast("Convirtiendo HEIC…");
         blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
         if (Array.isArray(blob)) blob = blob[0];
       }
 
-      showToast("Procesando imagen…");
       let bitmap;
       try {
         bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
@@ -296,7 +293,7 @@ export default function SplitSinDrama({ user }) {
         bitmap = await createImageBitmap(blob);
       }
 
-      const MAX = 1800;
+      const MAX = 1200;
       let w = bitmap.width, h = bitmap.height;
       if (w > MAX || h > MAX) {
         if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -308,9 +305,8 @@ export default function SplitSinDrama({ user }) {
       ctx.filter = "contrast(1.4) brightness(1.1) saturate(0.2)";
       ctx.drawImage(bitmap, 0, 0, w, h);
       bitmap.close();
-      const jpeg = canvas.toDataURL("image/jpeg", 0.95);
-      setImgPreview(canvas.toDataURL("image/jpeg", 0.7));
-      showToast("Enviando a la IA…");
+      const jpeg = canvas.toDataURL("image/jpeg", 0.82);
+      setImgPreview(canvas.toDataURL("image/jpeg", 0.6));
       analyzeImage(jpeg.split(",")[1], "image/jpeg");
     } catch (err) {
       console.error("Error procesando imagen:", err);

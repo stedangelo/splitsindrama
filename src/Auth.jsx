@@ -37,10 +37,14 @@ export function LoginScreen() {
 
   const loginWithGoogle = async () => {
     setLoading(true);
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin },
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sendCode = async (e) => {
