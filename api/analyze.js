@@ -16,13 +16,14 @@ export default async function handler(req, res) {
     body: JSON.stringify({
       model: "qwen/qwen3.6-27b",
       max_tokens: 1200,
+      thinking: { type: "disabled" },
       response_format: { type: "json_object" },
       messages: [{
         role: "user",
         content: [
           {
             type: "text",
-            text: `Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Puede estar en formato ticket de papel o boleta electrónica tributaria con columnas. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
+            text: `/no_think Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Puede estar en formato ticket de papel o boleta electrónica tributaria con columnas. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
 
 Formato exacto:
 {"items":[{"name":"nombre","qty":1,"price":5990}],"propina":10,"descuento":0,"descMode":"total"}
