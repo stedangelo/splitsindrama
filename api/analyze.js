@@ -16,7 +16,6 @@ export default async function handler(req, res) {
     body: JSON.stringify({
       model: "qwen/qwen3.6-27b",
       max_tokens: 1200,
-      thinking: { type: "disabled" },
       response_format: { type: "json_object" },
       messages: [{
         role: "user",
