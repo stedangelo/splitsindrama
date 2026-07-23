@@ -14,15 +14,14 @@ export default async function handler(req, res) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "qwen/qwen3.6-27b",
+      model: "meta-llama/llama-4-maverick-17b-128e-instruct",
       max_tokens: 1200,
-      response_format: { type: "json_object" },
       messages: [{
         role: "user",
         content: [
           {
             type: "text",
-            text: `/no_think Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Puede estar en formato ticket de papel o boleta electrónica tributaria con columnas. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
+            text: `Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Puede estar en formato ticket de papel o boleta electrónica tributaria con columnas. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
 
 Formato exacto:
 {"items":[{"name":"nombre","qty":1,"price":5990}],"propina":10,"descuento":0,"descMode":"total"}
@@ -53,7 +52,11 @@ Reglas para propina/descuento:
   const data = await response.json();
   if (!response.ok) return res.status(response.status).json({ error: data.error?.message || "Groq error" });
 
-  const text = data.choices?.[0]?.message?.content || "";
+  let text = data.choices?.[0]?.message?.content || "";
   console.log("Groq respuesta:", text.slice(0, 300));
+  // Strip markdown code fences if present
+  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (jsonMatch) text = jsonMatch[1];
+  else text = text.trim();
   res.status(200).json({ content: [{ text }] });
 }
