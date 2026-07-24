@@ -24,7 +24,7 @@ Reglas: incluye solo productos consumibles (platos, bebidas, postres). Excluye p
         "HTTP-Referer": "https://splitsindrama.vercel.app",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-exp:free",
+        model: "meta-llama/llama-4-scout:free",
         max_tokens: 1200,
         messages: [{
           role: "user",
