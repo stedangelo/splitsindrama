@@ -215,7 +215,6 @@ export default function SplitSinDrama({ user }) {
 
   // Scan con Groq vision IA
   const analyzeImage = useCallback(async (base64, mimeType) => {
-    if (scanCount >= SCAN_LIMIT) return;
     setAiLoading(true);
     setScanDone(false);
     try {
