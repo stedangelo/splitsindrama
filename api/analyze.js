@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const { base64, mimeType } = req.body;
   if (!base64 || !mimeType) return res.status(400).json({ error: "Missing base64 or mimeType" });
 
-  const apiKey = process.env.huggingface;
+  const apiKey = process.env.HUGGINGFACE || process.env.huggingface;
   if (!apiKey) return res.status(500).json({ error: "API key not configured" });
 
   const prompt = `Analiza esta boleta/pre-cuenta de restaurante o bar chileno. Devuelve ÚNICAMENTE un objeto JSON válido sin texto adicional, sin markdown, sin backticks.
