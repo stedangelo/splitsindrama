@@ -700,6 +700,20 @@ export default function SplitSinDrama({ user }) {
           ))}
         </div>
 
+        {/* División rápida */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 13, color: T.textFaint, flexShrink: 0 }}>División rápida:</span>
+          {[2, 3, 4, 5, 6, 7, 8].map(n => (
+            <button key={n} onClick={() => {
+              const next = Array.from({ length: n }, (_, i) => ({ id: Date.now() + i, name: `Persona ${i + 1}` }));
+              setMembers(next);
+              setMarks({});
+            }} style={{ width: 36, height: 36, borderRadius: 10, display: "grid", placeItems: "center", fontSize: 14, fontWeight: 600, fontFamily: "monospace", cursor: "pointer", border: `1px solid ${members.length === n && members[0]?.name?.startsWith("Persona") ? T.borderAccent : T.border}`, background: members.length === n && members[0]?.name?.startsWith("Persona") ? T.accentSoft : T.surface2, color: members.length === n && members[0]?.name?.startsWith("Persona") ? T.accentHi : T.textDim, transition: ".15s" }}>
+              {n}
+            </button>
+          ))}
+        </div>
+
         <form onSubmit={addMember} style={{ display: "flex", gap: 10, maxWidth: 420, marginBottom: 28 }}>
           <input
             placeholder="Nombre de la persona…"
