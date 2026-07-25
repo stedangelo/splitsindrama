@@ -606,7 +606,7 @@ export default function SplitSinDrama({ user }) {
         <p style={{ color: T.textDim, fontSize: 15, maxWidth: "54ch" }}>Define cuánto suman la propina y los descuentos. Se reparten de forma proporcional a lo que pidió cada uno.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 18 }}>
         {[
           { key: "tip", label: "Propina sugerida", desc: "10% es lo habitual en Chile", val: tip, setVal: setTip, presets: [0, 10, 12, 15] },
           { key: "disc", label: "Descuento", desc: "Cupón, happy hour o promo del local", val: disc, setVal: setDisc, presets: [0, 5, 10, 20] },
