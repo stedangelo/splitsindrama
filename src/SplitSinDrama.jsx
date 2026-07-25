@@ -735,7 +735,7 @@ export default function SplitSinDrama({ user }) {
             <table style={{ borderCollapse: "collapse", width: "100%", minWidth: "max-content" }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "14px 18px", fontWeight: 600, fontSize: 13, color: T.textDim, borderBottom: `1px solid ${T.border}`, background: T.surface2, minWidth: 200, position: "sticky", top: 0, zIndex: 2 }}>Ítem</th>
+                  <th style={{ textAlign: "left", padding: "14px 18px", fontWeight: 600, fontSize: 13, color: T.textDim, borderBottom: `1px solid ${T.border}`, background: T.surface2, minWidth: 200, position: "sticky", top: 0, left: 0, zIndex: 4, boxShadow: "2px 0 6px -2px rgba(0,0,0,.35)" }}>Ítem</th>
                   {members.map((m, i) => (
                     <th key={m.id} style={{ padding: "14px 10px", borderBottom: `1px solid ${T.border}`, background: T.surface2, minWidth: 74, position: "sticky", top: 0, zIndex: 2 }}>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -749,7 +749,7 @@ export default function SplitSinDrama({ user }) {
               <tbody>
                 {items.map(it => (
                   <tr key={it.id}>
-                    <td style={{ padding: "14px 18px", borderBottom: `1px solid ${T.border}`, minWidth: 200 }}>
+                    <td style={{ padding: "14px 18px", borderBottom: `1px solid ${T.border}`, minWidth: 200, position: "sticky", left: 0, background: T.surface, zIndex: 1, boxShadow: "2px 0 6px -2px rgba(0,0,0,.35)" }}>
                       <div style={{ fontSize: 14, fontWeight: 500 }}>{it.name}</div>
                       <div style={{ fontSize: 12, color: T.textFaint, fontFamily: "monospace", marginTop: 2 }}>{it.qty}× · {fmtCLP(it.price)}</div>
                     </td>
