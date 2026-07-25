@@ -123,6 +123,9 @@ export default function SplitSinDrama({ user }) {
   const [salaId, setSalaId] = useState(null);
   const [salaLoading, setSalaLoading] = useState(false);
   const [purchasedCredits, setPurchasedCredits] = useState(0);
+  const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const savedHistoryRef = useRef(false);
   const fileRef = useRef();
   let toastTimer = useRef();
 
@@ -131,7 +134,29 @@ export default function SplitSinDrama({ user }) {
       .then(({ count }) => setScanCount(count || 0));
     supabase.from("subscriptions").select("credits").eq("user_id", user.id).maybeSingle()
       .then(({ data }) => { if (data) setPurchasedCredits(data.credits || 0); });
+    supabase.from("sessions").select("*").eq("owner_id", user.id)
+      .order("created_at", { ascending: false }).limit(20)
+      .then(({ data }) => setHistory(data || []));
   }, [user.id]);
+
+  const computeHistPerPerson = (sess) => {
+    const its = sess.items || [];
+    const mems = sess.members || [];
+    const mkrks = sess.marks || {};
+    const sub = its.reduce((s, i) => s + i.price, 0);
+    const dAmt = sub * (sess.disc || 0) / 100;
+    const tipBase = sess.disc_mode === "con" ? sub - dAmt : sub;
+    const g = sub - dAmt + tipBase * (sess.tip || 0) / 100;
+    const factor = sub > 0 ? g / sub : 0;
+    return mems.map(m => {
+      let base = 0;
+      its.forEach(it => {
+        const arr = mkrks[String(it.id)] || [];
+        if (arr.includes(m.id) && arr.length > 0) base += it.price / arr.length;
+      });
+      return { name: m.name, final: base * factor };
+    });
+  };
 
   const showToast = (msg) => {
     clearTimeout(toastTimer.current);
@@ -301,7 +326,7 @@ export default function SplitSinDrama({ user }) {
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext("2d");
-      ctx.filter = "contrast(1.4) brightness(1.1) saturate(0.2)";
+      ctx.filter = "grayscale(1) contrast(1.5) brightness(1.05)";
       ctx.drawImage(bitmap, 0, 0, w, h);
       bitmap.close();
       const jpeg = canvas.toDataURL("image/jpeg", 0.82);
@@ -825,7 +850,19 @@ export default function SplitSinDrama({ user }) {
             )}
             <button
               style={{ ...btnPrimary, opacity: (!allDone || members.length < 2) ? 0.4 : 1, cursor: (!allDone || members.length < 2) ? "not-allowed" : "pointer" }}
-              onClick={() => allDone && members.length >= 2 && setStep(3)}
+              onClick={() => {
+                if (!allDone || members.length < 2) return;
+                setStep(3);
+                if (!savedHistoryRef.current && items.length > 0 && !salaId) {
+                  savedHistoryRef.current = true;
+                  const serialized = serializeMarks(marks);
+                  supabase.from("sessions").insert({
+                    owner_id: user.id, items, members, marks: serialized, tip, disc, disc_mode: discMode,
+                  }).select("*").single().then(({ data }) => {
+                    if (data) setHistory(prev => [data, ...prev.slice(0, 19)]);
+                  });
+                }
+              }}
             >
               Ver resultado <ArrowRight />
             </button>
@@ -920,7 +957,7 @@ export default function SplitSinDrama({ user }) {
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 28 }}>
           <button style={btnGhost} onClick={() => setStep(2)}><ArrowLeft /> Volver a marcar</button>
-          <button style={btnGhost} onClick={() => { setItems([]); setMembers([]); setMarks({}); setImgPreview(null); setScanDone(false); setAiDetected(null); setStep(0); }}>Nueva cuenta</button>
+          <button style={btnGhost} onClick={() => { setItems([]); setMembers([]); setMarks({}); setImgPreview(null); setScanDone(false); setAiDetected(null); setSalaId(null); savedHistoryRef.current = false; setStep(0); }}>Nueva cuenta</button>
         </div>
       </div>
     );
@@ -956,8 +993,12 @@ export default function SplitSinDrama({ user }) {
             <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-.02em" }}>Split <span style={{ color: T.accentHi }}>Sin Drama</span></div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <button onClick={() => setShowHistory(true)} title="Ver historial" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: T.textDim, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: "6px 11px", cursor: "pointer", fontFamily: "inherit" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Historial
+            </button>
             <span style={{ fontSize: 13.5, fontWeight: 500, color: T.textDim }}>{userName}</span>
-            <button onClick={() => supabase.auth.signOut()} style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg, #2F6BFF, #9333EA)", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700, color: "#fff", border: `1px solid ${T.borderStrong}`, cursor: "pointer" }}>
+            <button onClick={() => supabase.auth.signOut()} title="Cerrar sesión" style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg, #2F6BFF, #9333EA)", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700, color: "#fff", border: `1px solid ${T.borderStrong}`, cursor: "pointer" }}>
               {userInitials}
             </button>
           </div>
@@ -988,6 +1029,67 @@ export default function SplitSinDrama({ user }) {
           {limitReached && step === 0 ? renderPaywall() : panels[step]()}
         </div>
       </main>
+
+      {/* History panel */}
+      {showHistory && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,.65)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "flex-end" }} onClick={() => setShowHistory(false)}>
+          <div style={{ width: "min(420px, 100vw)", height: "100dvh", background: T.surface, borderLeft: `1px solid ${T.border}`, display: "flex", flexDirection: "column", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: "20px 22px 16px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: T.surface, zIndex: 1 }}>
+              <div>
+                <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-.02em" }}>Historial</div>
+                <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 2 }}>Tus últimas cuentas divididas</div>
+              </div>
+              <button onClick={() => setShowHistory(false)} style={{ background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 8, padding: "6px 12px", color: T.textDim, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+              {history.length === 0 ? (
+                <div style={{ padding: 48, textAlign: "center", color: T.textFaint, fontSize: 14, lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🧾</div>
+                  No hay cuentas guardadas aún.<br />Termina una cuenta para verla aquí.
+                </div>
+              ) : history.map(sess => {
+                const hGrand = (() => {
+                  const sub = (sess.items || []).reduce((s, i) => s + i.price, 0);
+                  const dAmt = sub * (sess.disc || 0) / 100;
+                  const tipBase = sess.disc_mode === "con" ? sub - dAmt : sub;
+                  return sub - dAmt + tipBase * (sess.tip || 0) / 100;
+                })();
+                const date = new Date(sess.created_at).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+                const hMembers = sess.members || [];
+                const perPerson = computeHistPerPerson(sess);
+                return (
+                  <div key={sess.id} style={{ background: T.surface2, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "16px 18px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 12, color: T.textFaint }}>{date}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, marginTop: 3 }}>
+                          {hMembers.length > 0 ? hMembers.map(m => m.name).join(", ") : "Sin personas"}
+                        </div>
+                      </div>
+                      <div style={{ fontFamily: "monospace", fontSize: 17, fontWeight: 700, color: T.accentHi }}>{fmtCLP(hGrand)}</div>
+                    </div>
+                    {perPerson.length > 0 && (
+                      <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 10, display: "flex", flexDirection: "column", gap: 5 }}>
+                        {perPerson.map(({ name, final }, i) => (
+                          <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: T.textDim }}>
+                            <span>{name}</span>
+                            <span style={{ fontFamily: "monospace", color: T.text, fontWeight: 500 }}>{fmtCLP(final)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ marginTop: 10, fontSize: 12, color: T.textFaint }}>
+                      {(sess.items || []).length} ítem{(sess.items || []).length !== 1 ? "s" : ""}
+                      {sess.tip > 0 ? ` · Propina ${sess.tip}%` : ""}
+                      {sess.disc > 0 ? ` · Descuento ${sess.disc}%` : ""}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       <div style={{ position: "fixed", left: "50%", bottom: 28, transform: `translateX(-50%) translateY(${toast.show ? 0 : 20}px)`, background: T.surface3, border: `1px solid ${T.borderStrong}`, padding: "11px 18px", borderRadius: 12, fontSize: 13.5, fontWeight: 500, display: "flex", alignItems: "center", gap: 9, zIndex: 80, boxShadow: "0 20px 40px -12px rgba(0,0,0,.7)", opacity: toast.show ? 1 : 0, pointerEvents: "none", transition: ".3s cubic-bezier(.22,.61,.36,1)", whiteSpace: "nowrap" }}>
