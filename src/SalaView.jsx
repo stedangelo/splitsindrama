@@ -160,84 +160,73 @@ export default function SalaView({ sessionId }) {
               <button onClick={() => setMyMemberId(null)} style={{ fontSize: 12, color: T.textDim, background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>Cambiar</button>
             </div>
 
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: T.textDim, marginBottom: 12, textTransform: "uppercase", letterSpacing: ".04em", fontSize: 12 }}>Marca lo que consumiste</h3>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
-              {items.map(it => {
-                const on = marks[it.id]?.has(myMemberId);
-                const sharedWith = marks[it.id] ? [...marks[it.id]].filter(id => id !== myMemberId) : [];
-                return (
-                  <button key={it.id} onClick={() => toggleMark(it.id, myMemberId)} style={{
-                    display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
-                    borderRadius: T.radius,
-                    border: `1px solid ${on ? T.borderAccent : T.border}`,
-                    background: on ? T.accentSoft : T.surface,
-                    color: T.text, fontFamily: "inherit", cursor: "pointer", textAlign: "left",
-                    transition: "all .15s",
-                  }}>
-                    <div style={{
-                      width: 26, height: 26, borderRadius: 8, flexShrink: 0, display: "grid", placeItems: "center",
-                      background: on ? T.accent : T.surface2,
-                      border: `1px solid ${on ? "transparent" : T.border}`,
-                      color: on ? "#fff" : "transparent",
-                      transition: "all .15s",
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500 }}>{it.name}</div>
-                      <div style={{ fontSize: 11.5, color: T.textFaint, marginTop: 1 }}>
-                        {it.qty > 1 ? `${it.qty}× · ` : ""}{fmtCLP(it.price)}
-                        {sharedWith.length > 0 && (
-                          <span style={{ color: T.accentHi }}> · compartido</span>
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 13, fontFamily: "monospace", color: on ? T.accentHi : T.textFaint, fontWeight: 600, flexShrink: 0 }}>
-                      {on ? fmtCLP(it.price / (marks[it.id]?.size || 1)) : ""}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Mi subtotal */}
-            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "16px 18px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 13, color: T.textDim }}>Sin propina</span>
-                <span style={{ fontSize: 13, fontFamily: "monospace", color: T.textDim }}>{fmtCLP(per[myMemberId]?.base || 0)}</span>
-              </div>
-              {tip > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, color: T.textDim }}>Propina ({tip}%)</span>
-                  <span style={{ fontSize: 13, fontFamily: "monospace", color: T.textDim }}>+{fmtCLP((per[myMemberId]?.final || 0) - (per[myMemberId]?.base || 0))}</span>
-                </div>
-              )}
-              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: `1px solid ${T.border}` }}>
-                <span style={{ fontSize: 16, fontWeight: 700 }}>Tu total</span>
-                <span style={{ fontSize: 18, fontFamily: "monospace", fontWeight: 700, color: T.accentHi }}>{fmtCLP(per[myMemberId]?.final || 0)}</span>
-              </div>
-              {(per[myMemberId]?.final || 0) > 0 && (
-                <a
-                  href={`https://link.mercadopago.cl/donc3lla?amount=${Math.round(per[myMemberId]?.final || 0)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 16px", borderRadius: 10, background: "#009ee3", color: "#fff", fontFamily: "inherit", fontSize: 14, fontWeight: 600, textDecoration: "none" }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" fill="currentColor" opacity=".2"/><path d="M8 12h8M12 8l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  Pagar {fmtCLP(per[myMemberId]?.final || 0)} con Mercado Pago
-                </a>
-              )}
+            {/* Tabla completa */}
+            <div style={{ overflowX: "auto", border: `1px solid ${T.border}`, borderRadius: T.radius, background: T.surface, marginBottom: 24 }}>
+              <table style={{ borderCollapse: "collapse", width: "100%", minWidth: "max-content" }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: "13px 16px", fontWeight: 600, fontSize: 12.5, color: T.textDim, borderBottom: `1px solid ${T.border}`, background: T.surface2, minWidth: 180, position: "sticky", top: 0, left: 0, zIndex: 4, boxShadow: "2px 0 6px -2px rgba(0,0,0,.45)" }}>Ítem</th>
+                    {members.map((m, i) => (
+                      <th key={m.id} style={{ padding: "13px 10px", borderBottom: `1px solid ${T.border}`, background: m.id === myMemberId ? "rgba(37,99,255,.1)" : T.surface2, minWidth: 70, position: "sticky", top: 0, zIndex: 2 }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                          <span style={{ width: 26, height: 26, borderRadius: "50%", display: "grid", placeItems: "center", fontSize: 10.5, fontWeight: 700, color: "#fff", background: pcolor(i), outline: m.id === myMemberId ? `2px solid ${T.accent}` : "none", outlineOffset: 2 }}>{initials(m.name)}</span>
+                          <span style={{ fontSize: 12, fontWeight: m.id === myMemberId ? 700 : 500, color: m.id === myMemberId ? T.accentHi : T.text }}>{m.name}</span>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map(it => (
+                    <tr key={it.id}>
+                      <td style={{ padding: "13px 16px", borderBottom: `1px solid ${T.border}`, minWidth: 180, position: "sticky", left: 0, background: T.surface, zIndex: 1, boxShadow: "2px 0 6px -2px rgba(0,0,0,.45)" }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 500 }}>{it.name}</div>
+                        <div style={{ fontSize: 11.5, color: T.textFaint, fontFamily: "monospace", marginTop: 2 }}>{it.qty}× · {fmtCLP(it.price)}</div>
+                      </td>
+                      {members.map(m => {
+                        const on = marks[it.id]?.has(m.id);
+                        const isMe = m.id === myMemberId;
+                        return (
+                          <td key={m.id} style={{ padding: 10, borderBottom: `1px solid ${T.border}`, textAlign: "center", background: isMe && on ? "rgba(37,99,255,.06)" : "transparent" }}>
+                            <button
+                              onClick={() => toggleMark(it.id, m.id)}
+                              style={{
+                                width: 30, height: 30, borderRadius: 9, margin: "0 auto", display: "grid", placeItems: "center",
+                                background: on ? T.accent : T.surface2,
+                                border: `1.5px solid ${on ? T.accent : isMe ? T.borderStrong : T.border}`,
+                                color: on ? "#fff" : "transparent",
+                                cursor: "pointer", transition: "all .14s",
+                              }}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            </button>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                  {/* Fila de totales */}
+                  <tr>
+                    <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: 13, color: T.textDim, position: "sticky", left: 0, background: T.surface2, zIndex: 1, boxShadow: "2px 0 6px -2px rgba(0,0,0,.45)" }}>Total c/propina</td>
+                    {members.map((m, i) => (
+                      <td key={m.id} style={{ padding: "12px 10px", textAlign: "center", background: m.id === myMemberId ? "rgba(37,99,255,.08)" : T.surface2 }}>
+                        <span style={{ fontFamily: "monospace", fontSize: 13, fontWeight: 700, color: m.id === myMemberId ? T.accentHi : per[m.id]?.final > 0 ? T.text : T.textFaint }}>
+                          {fmtCLP(per[m.id]?.final || 0)}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             {/* Resumen todos */}
-            <div style={{ marginTop: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: T.textFaint, textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 10 }}>Todos en la mesa</div>
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "6px 18px 10px" }}>
               {members.map((m, i) => (
-                <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${T.border}` }}>
-                  <span style={{ width: 26, height: 26, borderRadius: "50%", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, color: "#fff", background: pcolor(i), flexShrink: 0 }}>{initials(m.name)}</span>
-                  <span style={{ flex: 1, fontSize: 14, color: m.id === myMemberId ? T.text : T.textDim, fontWeight: m.id === myMemberId ? 600 : 400 }}>{m.name}</span>
-                  <span style={{ fontSize: 13, fontFamily: "monospace", color: per[m.id]?.final > 0 ? T.text : T.textFaint }}>{fmtCLP(per[m.id]?.final || 0)}</span>
+                <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: i < members.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                  <span style={{ width: 26, height: 26, borderRadius: "50%", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, color: "#fff", background: pcolor(i), flexShrink: 0, outline: m.id === myMemberId ? `2px solid ${T.accent}` : "none", outlineOffset: 2 }}>{initials(m.name)}</span>
+                  <span style={{ flex: 1, fontSize: 14, color: m.id === myMemberId ? T.text : T.textDim, fontWeight: m.id === myMemberId ? 700 : 400 }}>{m.name}{m.id === myMemberId ? " (tú)" : ""}</span>
+                  <span style={{ fontSize: 14, fontFamily: "monospace", fontWeight: 600, color: m.id === myMemberId ? T.accentHi : per[m.id]?.final > 0 ? T.text : T.textFaint }}>{fmtCLP(per[m.id]?.final || 0)}</span>
                 </div>
               ))}
             </div>

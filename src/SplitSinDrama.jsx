@@ -126,6 +126,8 @@ export default function SplitSinDrama({ user }) {
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const savedHistoryRef = useRef(false);
+  const lastScanRef = useRef(null);
+  const [scanError, setScanError] = useState(false);
   const fileRef = useRef();
   let toastTimer = useRef();
 
@@ -242,6 +244,8 @@ export default function SplitSinDrama({ user }) {
   const analyzeImage = useCallback(async (base64, mimeType) => {
     setAiLoading(true);
     setScanDone(false);
+    setScanError(false);
+    lastScanRef.current = { base64, mimeType };
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30000);
@@ -289,6 +293,7 @@ export default function SplitSinDrama({ user }) {
       console.error(e);
       const msg = e.name === "AbortError" ? "Tiempo de espera agotado — intenta de nuevo" : "Error al procesar — intenta de nuevo";
       showToast(msg);
+      setScanError(true);
     } finally {
       setAiLoading(false);
     }
@@ -371,7 +376,13 @@ export default function SplitSinDrama({ user }) {
     setMarks(prev => {
       const set = new Set(prev[itemId] || []);
       set.has(personId) ? set.delete(personId) : set.add(personId);
-      return { ...prev, [itemId]: set };
+      const next = { ...prev, [itemId]: set };
+      if (salaId) {
+        const serialized = {};
+        for (const [k, v] of Object.entries(next)) serialized[k] = [...v];
+        supabase.from("sessions").update({ marks: serialized }).eq("id", salaId);
+      }
+      return next;
     });
   };
 
@@ -507,6 +518,23 @@ export default function SplitSinDrama({ user }) {
             </div>
           ) : (
             <>
+              {scanError && !scanDone ? (
+                <div style={{ background: "rgba(220,60,60,.08)", border: "1px solid rgba(220,60,60,.3)", borderRadius: T.radius, padding: "18px 20px", marginBottom: 18, display: "flex", alignItems: "center", gap: 14 }}>
+                  <img src={imgPreview} alt="Boleta" style={{ width: 46, height: 58, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: `1px solid rgba(220,60,60,.4)` }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#f87171" }}>No se pudo leer la boleta</div>
+                    <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 3 }}>Puede ser timeout o mala calidad. Intenta de nuevo.</div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <button onClick={() => lastScanRef.current && analyzeImage(lastScanRef.current.base64, lastScanRef.current.mimeType)} style={{ fontSize: 13, fontWeight: 600, color: "#fff", padding: "9px 14px", borderRadius: 9, border: "none", background: T.accent, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                      Reintentar
+                    </button>
+                    <button onClick={() => { setImgPreview(null); setItems([]); setScanDone(false); setScanError(false); setAiDetected(null); fileRef.current.value = ""; }} style={{ fontSize: 12, color: T.textDim, padding: "6px 10px", borderRadius: 9, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                      Cambiar foto
+                    </button>
+                  </div>
+                </div>
+              ) : (
               <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: 14, marginBottom: 18, display: "flex", alignItems: "center", gap: 14 }}>
                 <img src={imgPreview} alt="Boleta" style={{ width: 46, height: 58, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: `1px solid ${T.borderStrong}` }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -521,10 +549,11 @@ export default function SplitSinDrama({ user }) {
                   </div>
                   <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 3 }}>{items.length} ítems detectados</div>
                 </div>
-                <button onClick={() => { setImgPreview(null); setItems([]); setScanDone(false); setAiDetected(null); fileRef.current.value = ""; }} style={{ fontSize: 13, color: T.textDim, fontWeight: 500, padding: "8px 13px", borderRadius: 9, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={() => { setImgPreview(null); setItems([]); setScanDone(false); setScanError(false); setAiDetected(null); fileRef.current.value = ""; }} style={{ fontSize: 13, color: T.textDim, fontWeight: 500, padding: "8px 13px", borderRadius: 9, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", fontFamily: "inherit" }}>
                   Cambiar foto
                 </button>
               </div>
+              )}
 
               {aiDetected && (
                 <div style={{ background: "rgba(47,184,119,.08)", border: "1px solid rgba(47,184,119,.25)", borderRadius: T.radiusSm, padding: "10px 14px", marginBottom: 14, fontSize: 12.5, color: T.ok, display: "flex", gap: 8 }}>
