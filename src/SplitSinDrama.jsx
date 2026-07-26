@@ -905,12 +905,12 @@ export default function SplitSinDrama({ user }) {
           <button style={btnGhost} onClick={() => setStep(1)}><ArrowLeft /> Volver</button>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5 }}>
             {!allDone && members.length >= 1 && (
-              <span style={{ fontSize: 11.5, color: T.textDim }}>Quedan {fmtCLP(unassignedAmt)} sin asignar</span>
+              <span style={{ fontSize: 11.5, color: "#f59e0b" }}>Falta asignar {fmtCLP(unassignedAmt)}</span>
             )}
             <button
-              style={{ ...btnPrimary, opacity: members.length < 1 ? 0.4 : 1, cursor: members.length < 1 ? "not-allowed" : "pointer" }}
+              style={{ ...btnPrimary, opacity: (!allDone || members.length < 1) ? 0.4 : 1, cursor: (!allDone || members.length < 1) ? "not-allowed" : "pointer" }}
               onClick={() => {
-                if (members.length < 1) return;
+                if (!allDone || members.length < 1) return;
                 setStep(3);
                 if (!savedHistoryRef.current && items.length > 0 && !salaId) {
                   savedHistoryRef.current = true;
