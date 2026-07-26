@@ -141,6 +141,22 @@ export default function SplitSinDrama({ user }) {
       .then(({ data }) => setHistory(data || []));
   }, [user.id]);
 
+  const loadFromHistory = (sess) => {
+    const rawMarks = sess.marks || {};
+    const restoredMarks = {};
+    for (const [k, v] of Object.entries(rawMarks)) restoredMarks[k] = new Set(v);
+    setItems(sess.items || []);
+    setMembers(sess.members || []);
+    setMarks(restoredMarks);
+    setTip(sess.tip ?? 10);
+    setDisc(sess.disc ?? 0);
+    setDiscMode(sess.disc_mode || "sin");
+    setSalaId(null);
+    savedHistoryRef.current = true;
+    setShowHistory(false);
+    setStep(3);
+  };
+
   const computeHistPerPerson = (sess) => {
     const its = sess.items || [];
     const mems = sess.members || [];
@@ -1110,10 +1126,15 @@ export default function SplitSinDrama({ user }) {
                         ))}
                       </div>
                     )}
-                    <div style={{ marginTop: 10, fontSize: 12, color: T.textFaint }}>
-                      {(sess.items || []).length} ítem{(sess.items || []).length !== 1 ? "s" : ""}
-                      {sess.tip > 0 ? ` · Propina ${sess.tip}%` : ""}
-                      {sess.disc > 0 ? ` · Descuento ${sess.disc}%` : ""}
+                    <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ fontSize: 12, color: T.textFaint }}>
+                        {(sess.items || []).length} ítem{(sess.items || []).length !== 1 ? "s" : ""}
+                        {sess.tip > 0 ? ` · Propina ${sess.tip}%` : ""}
+                        {sess.disc > 0 ? ` · Descuento ${sess.disc}%` : ""}
+                      </div>
+                      <button onClick={() => loadFromHistory(sess)} style={{ fontSize: 12.5, fontWeight: 600, color: T.accentHi, background: T.accentSoft, border: `1px solid ${T.borderAccent}`, borderRadius: 8, padding: "6px 13px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}>
+                        Cargar cuenta
+                      </button>
                     </div>
                   </div>
                 );
