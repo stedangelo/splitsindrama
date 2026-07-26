@@ -863,8 +863,8 @@ export default function SplitSinDrama({ user }) {
             <div style={{ height: "100%", width: `${assignedPct}%`, borderRadius: 99, background: allDone ? "#22c55e" : T.accent, transition: "width .3s ease" }} />
           </div>
           {emptyMembers.size > 0 && (
-            <div style={{ marginTop: 9, fontSize: 12, color: "#f59e0b" }}>
-              ⚠ Sin marcar: {members.filter(m => emptyMembers.has(m.id)).map(m => m.name).join(", ")}
+            <div style={{ marginTop: 9, fontSize: 12, color: T.textDim }}>
+              {members.filter(m => emptyMembers.has(m.id)).map(m => m.name).join(", ")} {emptyMembers.size === 1 ? "no tiene nada marcado — será invitada/o" : "no tienen nada marcado — serán invitadas/os"}
             </div>
           )}
         </div>
@@ -904,13 +904,13 @@ export default function SplitSinDrama({ user }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, marginTop: 28 }}>
           <button style={btnGhost} onClick={() => setStep(1)}><ArrowLeft /> Volver</button>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5 }}>
-            {!allDone && members.length >= 2 && (
-              <span style={{ fontSize: 11.5, color: "#f59e0b" }}>Falta marcar {fmtCLP(unassignedAmt)}</span>
+            {!allDone && members.length >= 1 && (
+              <span style={{ fontSize: 11.5, color: T.textDim }}>Quedan {fmtCLP(unassignedAmt)} sin asignar</span>
             )}
             <button
-              style={{ ...btnPrimary, opacity: (!allDone || members.length < 2) ? 0.4 : 1, cursor: (!allDone || members.length < 2) ? "not-allowed" : "pointer" }}
+              style={{ ...btnPrimary, opacity: members.length < 1 ? 0.4 : 1, cursor: members.length < 1 ? "not-allowed" : "pointer" }}
               onClick={() => {
-                if (!allDone || members.length < 2) return;
+                if (members.length < 1) return;
                 setStep(3);
                 if (!savedHistoryRef.current && items.length > 0 && !salaId) {
                   savedHistoryRef.current = true;
