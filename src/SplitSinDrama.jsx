@@ -1031,14 +1031,8 @@ export default function SplitSinDrama({ user }) {
       {/* Topbar */}
       <header style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(10,10,10,.72)", backdropFilter: "saturate(160%) blur(16px)", borderBottom: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: 880, margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px clamp(18px, 4vw, 28px)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 9, background: "linear-gradient(150deg, #2563FF, #1843B8)", display: "grid", placeItems: "center", boxShadow: `0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 12px -2px ${T.accentGlow}` }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                <path d="M12 3v18" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M5 8.5 9 12l-4 3.5" stroke="rgba(255,255,255,.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M19 8.5 15 12l4 3.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <img src="/favicon.png" alt="Split Sin Drama" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }} />
             <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-.02em" }}>Split <span style={{ color: T.accentHi }}>Sin Drama</span></div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
