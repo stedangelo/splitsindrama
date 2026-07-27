@@ -125,6 +125,7 @@ export default function SplitSinDrama({ user }) {
   const [purchasedCredits, setPurchasedCredits] = useState(0);
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const savedHistoryRef = useRef(false);
   const lastScanRef = useRef(null);
   const [scanError, setScanError] = useState(false);
@@ -1045,10 +1046,35 @@ export default function SplitSinDrama({ user }) {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Historial
             </button>
-            <span style={{ fontSize: 13.5, fontWeight: 500, color: T.textDim }}>{userName}</span>
-            <button onClick={() => supabase.auth.signOut()} title="Cerrar sesión" style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg, #2F6BFF, #9333EA)", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700, color: "#fff", border: `1px solid ${T.borderStrong}`, cursor: "pointer" }}>
-              {userInitials}
-            </button>
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => setShowUserMenu(p => !p)}
+                style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", cursor: "pointer", padding: "4px 2px", borderRadius: 8 }}
+              >
+                <span style={{ fontSize: 13.5, fontWeight: 500, color: T.textDim }}>{userName}</span>
+                <span style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg, #2F6BFF, #9333EA)", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700, color: "#fff", border: `1px solid ${T.borderStrong}`, flexShrink: 0 }}>
+                  {userInitials}
+                </span>
+              </button>
+              {showUserMenu && (
+                <>
+                  <div style={{ position: "fixed", inset: 0, zIndex: 49 }} onClick={() => setShowUserMenu(false)} />
+                  <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 50, background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, boxShadow: "0 16px 40px -8px rgba(0,0,0,.7)", minWidth: 180, overflow: "hidden" }}>
+                    <div style={{ padding: "12px 16px", borderBottom: `1px solid ${T.border}` }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text }}>{userName}</div>
+                      <div style={{ fontSize: 11.5, color: T.textFaint, marginTop: 2 }}>{user.email}</div>
+                    </div>
+                    <button
+                      onClick={() => { setShowUserMenu(false); supabase.auth.signOut(); }}
+                      style={{ width: "100%", textAlign: "left", padding: "11px 16px", background: "none", border: "none", color: "#f87171", fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
