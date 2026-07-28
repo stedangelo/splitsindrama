@@ -1031,10 +1031,7 @@ export default function SplitSinDrama({ user }) {
       {/* Topbar */}
       <header style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(10,10,10,.72)", backdropFilter: "saturate(160%) blur(16px)", borderBottom: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: 880, margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px clamp(18px, 4vw, 28px)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <img src="/favicon.png" alt="Split Sin Drama" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }} />
-            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-.02em" }}>Split <span style={{ color: T.accentHi }}>Sin Drama</span></div>
-          </div>
+          <img src="/favicon.png" alt="Split Sin Drama" style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} />
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
             <button onClick={() => setShowHistory(true)} title="Ver historial" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: T.textDim, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: "6px 11px", cursor: "pointer", fontFamily: "inherit" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
