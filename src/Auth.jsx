@@ -99,8 +99,7 @@ export function LoginScreen() {
       </div>
 
       {/* Hero */}
-      <div style={{ width: "100%", maxWidth: 520, textAlign: "center", padding: "16px 0 36px", position: "relative", zIndex: 1 }}>
-        <img src="/logo.png" alt="Split Sin Drama" style={{ width: "min(320px, 80vw)", marginBottom: 16, filter: "drop-shadow(0 0 40px rgba(37,99,255,.3))" }} />
+      <div style={{ width: "100%", maxWidth: 520, textAlign: "center", padding: "40px 0 36px", position: "relative", zIndex: 1 }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(37,99,255,.12)", border: "1px solid rgba(37,99,255,.25)", borderRadius: 99, padding: "5px 14px", fontSize: 12.5, color: "#4F82FF", fontWeight: 600, marginBottom: 22 }}>
           ✨ Powered by inteligencia artificial
         </div>
