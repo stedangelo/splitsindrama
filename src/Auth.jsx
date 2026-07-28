@@ -92,25 +92,15 @@ export function LoginScreen() {
       {/* Nav */}
       <div style={{ width: "100%", maxWidth: 520, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0", position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-            background: "linear-gradient(150deg, #2563FF, #1843B8)",
-            boxShadow: "0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 12px -3px rgba(37,99,255,.5)",
-            display: "grid", placeItems: "center",
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 3v18" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M5 8.5 9 12l-4 3.5" stroke="rgba(255,255,255,.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M19 8.5 15 12l4 3.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
+          <img src="/favicon.png" alt="Split Sin Drama" style={{ width: 34, height: 34, borderRadius: 10, objectFit: "cover" }} />
           <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-.02em", color: "#fff" }}>Split <span style={{ color: "#4F82FF" }}>Sin Drama</span></span>
         </div>
         <span style={{ fontSize: 12, color: "#555", background: "#141414", border: "1px solid #222", borderRadius: 99, padding: "4px 10px" }}>Gratis · Sin tarjeta</span>
       </div>
 
       {/* Hero */}
-      <div style={{ width: "100%", maxWidth: 520, textAlign: "center", padding: "40px 0 36px", position: "relative", zIndex: 1 }}>
+      <div style={{ width: "100%", maxWidth: 520, textAlign: "center", padding: "16px 0 36px", position: "relative", zIndex: 1 }}>
+        <img src="/logo.png" alt="Split Sin Drama" style={{ width: "min(320px, 80vw)", marginBottom: 16, filter: "drop-shadow(0 0 40px rgba(37,99,255,.3))" }} />
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(37,99,255,.12)", border: "1px solid rgba(37,99,255,.25)", borderRadius: 99, padding: "5px 14px", fontSize: 12.5, color: "#4F82FF", fontWeight: 600, marginBottom: 22 }}>
           ✨ Powered by inteligencia artificial
         </div>
