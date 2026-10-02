@@ -651,12 +651,13 @@ export default function SplitSinDrama({ user }) {
                 </div>
               )}
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, padding: "0 4px" }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: T.textDim }}>Ítems detectados <span style={{ fontWeight: 400, color: T.textFaint }}>· toca un dato para corregirlo</span></span>
-                <span style={{ fontSize: 12.5, color: T.textFaint, fontFamily: "monospace" }}>PRECIO</span>
-              </div>
+              {!(scanError && items.length === 0) && <>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, padding: "0 4px" }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: T.textDim }}>Ítems detectados <span style={{ fontWeight: 400, color: T.textFaint }}>· toca un dato para corregirlo</span></span>
+                  <span style={{ fontSize: 12.5, color: T.textFaint, fontFamily: "monospace" }}>PRECIO</span>
+                </div>
 
-              <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius }}>
+                <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius }}>
                 {items.map(it => (
                   <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 16px", borderBottom: `1px solid ${T.border}` }}>
                     <span style={{ minWidth: 38, height: 28, borderRadius: 7, padding: "0 5px", display: "flex", alignItems: "center", gap: 2, background: T.surface3, color: T.textDim, fontFamily: "monospace", fontSize: 12.5, fontWeight: 600, border: `1px solid ${T.border}`, flexShrink: 0 }}>
@@ -693,12 +694,13 @@ export default function SplitSinDrama({ user }) {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>
                   Agregar ítem manualmente
                 </button>
-              </div>
+                </div>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 18, padding: "16px 18px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radiusSm }}>
-                <span style={{ fontSize: 14, color: T.textDim, fontWeight: 500 }}>Subtotal de la boleta</span>
-                <span style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 600 }}>{fmtCLP(subtotal)}</span>
-              </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 18, padding: "16px 18px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radiusSm }}>
+                  <span style={{ fontSize: 14, color: T.textDim, fontWeight: 500 }}>Subtotal de la boleta</span>
+                  <span style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 600 }}>{fmtCLP(subtotal)}</span>
+                </div>
+              </>}
             </>
           )}
         </>
