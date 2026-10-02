@@ -1043,7 +1043,11 @@ export default function SplitSinDrama({ user }) {
           {members.map((m, i) => {
             const d = per[m.id];
             const myItems = items.filter(it => marks[it.id]?.has(m.id));
-            const extra = d.final - d.base;
+            const memberTotal = Math.round(d.base);
+            const memberDiscount = Math.round(d.base * disc / 100);
+            const memberFinal = Math.round(d.final);
+            // Reconcile rounding so the displayed line items sum exactly to the final total.
+            const memberTip = memberFinal - memberTotal + memberDiscount;
             const color = pcolor(i);
             const isCopied = copied[m.id];
             return (
@@ -1059,24 +1063,29 @@ export default function SplitSinDrama({ user }) {
                 <div style={{ fontFamily: "monospace", fontSize: 30, fontWeight: 700, letterSpacing: "-.02em", marginBottom: 4 }}>{fmtCLP(d.final)}</div>
                 <div style={{ margin: "14px 0 16px", borderTop: `1px solid ${T.border}`, paddingTop: 12 }}>
                   {myItems.length === 0 ? (
-                    <div style={{ fontSize: 12.5, color: T.textFaint }}>Nada marcado todavía</div>
-                  ) : (
-                    <>
-                      {myItems.map(it => {
-                        const sh = it.price / marks[it.id].size;
-                        return (
-                          <div key={it.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "3px 0", color: T.textDim }}>
-                            <span>{it.name}{marks[it.id].size > 1 ? <span style={{ color: T.textFaint }}> ÷{marks[it.id].size}</span> : ""}</span>
-                            <span style={{ fontFamily: "monospace" }}>{fmtCLP(sh)}</span>
-                          </div>
-                        );
-                      })}
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "8px 0 3px", borderTop: `1px solid ${T.border}`, marginTop: 6, color: T.textFaint }}>
-                        <span>Propina / descuento</span>
-                        <span style={{ fontFamily: "monospace" }}>{extra >= 0 ? "+" : "−"}{fmtCLP(Math.abs(extra))}</span>
+                    <div style={{ fontSize: 12.5, color: T.textFaint, marginBottom: 10 }}>Nada marcado todavía</div>
+                  ) : myItems.map(it => {
+                    const sh = it.price / marks[it.id].size;
+                    return (
+                      <div key={it.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "3px 0", color: T.textDim }}>
+                        <span>{it.name}{marks[it.id].size > 1 ? <span style={{ color: T.textFaint }}> ÷{marks[it.id].size}</span> : ""}</span>
+                        <span style={{ fontFamily: "monospace" }}>{fmtCLP(sh)}</span>
                       </div>
-                    </>
-                  )}
+                    );
+                  })}
+                  <div style={{ borderTop: `1px solid ${T.border}`, marginTop: 9, paddingTop: 8 }}>
+                    {[
+                      { label: "Total", value: fmtCLP(memberTotal) },
+                      { label: `Descuento (${disc}%)`, value: `−${fmtCLP(memberDiscount)}`, color: T.ok },
+                      { label: `Propina (${tip}%)`, value: `+${fmtCLP(memberTip)}` },
+                      { label: "Total con propina", value: fmtCLP(memberFinal), strong: true },
+                    ].map(row => (
+                      <div key={row.label} style={{ display: "flex", justifyContent: "space-between", gap: 8, padding: "5px 0", borderTop: row.strong ? `1px solid ${T.border}` : "none", marginTop: row.strong ? 4 : 0, fontSize: row.strong ? 13 : 12.5, fontWeight: row.strong ? 700 : 400, color: row.strong ? T.text : T.textDim }}>
+                        <span>{row.label}</span>
+                        <span style={{ fontFamily: "monospace", color: row.color || (row.strong ? T.accentHi : T.text) }}>{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <button onClick={() => copyPerson(m)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13.5, fontWeight: 600, padding: 10, borderRadius: 10, cursor: "pointer", fontFamily: "inherit", border: `1px solid ${isCopied ? "rgba(37,211,102,.5)" : T.border}`, background: isCopied ? "rgba(37,211,102,.16)" : T.surface2, color: isCopied ? "#25D366" : T.textDim, transition: ".18s" }}>
                   {isCopied ? <CheckIcon /> : <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
