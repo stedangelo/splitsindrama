@@ -1,5 +1,6 @@
 const MODELS = [
-  "nvidia/nemotron-nano-12b-v2-vl:free",
+  "qwen/qwen3.8-27b:free",
+  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   "google/gemma-4-31b-it:free",
   "google/gemma-4-26b-a4b-it:free",
 ];
@@ -56,7 +57,7 @@ async function callModel(apiKey, model, base64, mimeType) {
       "Content-Type": "application/json",
       "HTTP-Referer": "https://splitsindrama.vercel.app",
     },
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(8000),
     body: JSON.stringify({
       model,
       max_tokens: 1200,
