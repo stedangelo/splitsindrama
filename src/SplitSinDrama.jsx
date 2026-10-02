@@ -755,11 +755,12 @@ export default function SplitSinDrama({ user }) {
         {[
           { l: `Subtotal`, v: fmtCLP(subtotal), minus: false },
           { l: `Descuento (${disc}%)`, v: `−${fmtCLP(discAmt)}`, minus: true },
+          { l: "Total con descuento", v: fmtCLP(subtotal - discAmt), minus: false, emphasis: true },
           { l: `Propina (${tip}%)`, v: `+${fmtCLP(tipAmt)}`, minus: false },
         ].map(row => (
           <div key={row.l} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 0", borderBottom: `1px solid ${T.border}` }}>
-            <span style={{ fontSize: 14, color: T.textDim }}>{row.l}</span>
-            <span style={{ fontFamily: "monospace", fontSize: 15, fontWeight: 500, color: row.minus ? T.ok : T.text }}>{row.v}</span>
+            <span style={{ fontSize: 14, color: row.emphasis ? T.text : T.textDim, fontWeight: row.emphasis ? 600 : 400 }}>{row.l}</span>
+            <span style={{ fontFamily: "monospace", fontSize: row.emphasis ? 16 : 15, fontWeight: row.emphasis ? 600 : 500, color: row.minus ? T.ok : T.text }}>{row.v}</span>
           </div>
         ))}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 0" }}>
