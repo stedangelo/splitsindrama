@@ -133,6 +133,8 @@ export default function SplitSinDrama({ user }) {
   const [scanErrorMessage, setScanErrorMessage] = useState("");
   const [pastedReceipt, setPastedReceipt] = useState("");
   const [pasteError, setPasteError] = useState("");
+  const [manualReceiptMode, setManualReceiptMode] = useState(false);
+  const [showPastedEditor, setShowPastedEditor] = useState(false);
   const fileRef = useRef();
   let toastTimer = useRef();
 
@@ -150,6 +152,8 @@ export default function SplitSinDrama({ user }) {
     const rawMarks = sess.marks || {};
     const restoredMarks = {};
     for (const [k, v] of Object.entries(rawMarks)) restoredMarks[k] = new Set(v);
+    setPastedReceipt("");
+    setPasteError("");
     setItems(sess.items || []);
     setMembers(sess.members || []);
     setMarks(restoredMarks);
@@ -157,6 +161,8 @@ export default function SplitSinDrama({ user }) {
     setDisc(sess.disc ?? 0);
     setDiscMode(sess.disc_mode || "sin");
     setSalaId(null);
+    setManualReceiptMode(false);
+    setShowPastedEditor(false);
     savedHistoryRef.current = true;
     setShowHistory(false);
     setStep(3);
@@ -193,13 +199,22 @@ export default function SplitSinDrama({ user }) {
       setPasteError("No encontramos productos con sus precios. Pega el nombre y el precio, cada uno en una línea o juntos en la misma línea.");
       return;
     }
-    setItems(parsed.items.map(item => ({ ...item, id: Date.now() + Math.random() })));
+    const nextItems = parsed.items.map(item => ({ ...item, id: Date.now() + Math.random() }));
+    setItems(nextItems);
+    setMarks({});
+    savedHistoryRef.current = false;
+    if (salaId) {
+      supabase.from("sessions").update({ items: nextItems, marks: {} }).eq("id", salaId)
+        .then(({ error }) => { if (error) showToast("No se pudo actualizar la sala compartida"); });
+    }
     setScanDone(false);
     setScanError(false);
     setScanErrorMessage("");
     setAiDetected(null);
     if (parsed.tip !== null) setTip(parsed.tip);
     setPasteError("");
+    setManualReceiptMode(true);
+    setShowPastedEditor(false);
     showToast(`${parsed.items.length} productos agregados desde el texto`);
   };
 
@@ -251,6 +266,7 @@ export default function SplitSinDrama({ user }) {
         }, payload => {
           setMarks(deserializeMarks(payload.new.marks || {}));
           if (Array.isArray(payload.new.members)) setMembers(payload.new.members);
+          if (Array.isArray(payload.new.items)) setItems(payload.new.items);
         })
         .subscribe();
     }, 800);
@@ -355,6 +371,7 @@ export default function SplitSinDrama({ user }) {
     const isImage = file.type.startsWith("image/") || ["heic", "heif", "jpg", "jpeg", "png", "webp"].includes(ext);
     if (!isImage) return;
     setItems([]); setScanDone(false); setAiLoading(true);
+    setManualReceiptMode(false); setShowPastedEditor(false); setPastedReceipt("");
 
     try {
       let blob = file;
@@ -649,9 +666,9 @@ export default function SplitSinDrama({ user }) {
               </div>
               )}
 
-              {scanError && items.length === 0 && <div style={{ margin: "-2px 0 18px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "16px 18px" }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 5 }}>¿No se leyó la boleta? Pega aquí su texto</div>
-                <p style={{ color: T.textDim, fontSize: 12.5, lineHeight: 1.5, marginBottom: 10 }}>Pega los productos y precios de la boleta.</p>
+              {((scanError && items.length === 0) || (manualReceiptMode && showPastedEditor)) && <div style={{ margin: "-2px 0 18px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "16px 18px" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 5 }}>{manualReceiptMode ? "Corrige el texto pegado" : "¿No se leyó la boleta? Pega aquí su texto"}</div>
+                <p style={{ color: T.textDim, fontSize: 12.5, lineHeight: 1.5, marginBottom: 10 }}>{manualReceiptMode ? "Edita el texto y vuelve a generar la lista." : "Pega los productos y precios de la boleta."}</p>
                 <textarea
                   value={pastedReceipt}
                   onChange={e => { setPastedReceipt(e.target.value); if (pasteError) setPasteError(""); }}
@@ -663,10 +680,14 @@ export default function SplitSinDrama({ user }) {
                 {pasteError && <div role="alert" style={{ color: "#f87171", fontSize: 12.5, marginTop: 8 }}>{pasteError}</div>}
                 <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
                   <button onClick={usePastedReceipt} disabled={!pastedReceipt.trim()} style={{ ...btnPrimary, opacity: pastedReceipt.trim() ? 1 : 0.45, cursor: pastedReceipt.trim() ? "pointer" : "not-allowed" }}>
-                    Crear lista desde el texto <ArrowRight />
+                    {manualReceiptMode ? "Actualizar lista desde el texto" : "Crear lista desde el texto"} <ArrowRight />
                   </button>
                 </div>
               </div>}
+
+              {manualReceiptMode && !showPastedEditor && items.length > 0 && <button onClick={() => setShowPastedEditor(true)} style={{ ...btnGhost, fontSize: 12.5, padding: "7px 11px", marginBottom: 14 }}>
+                Editar texto pegado
+              </button>}
 
               {aiDetected && (
                 <div style={{ background: "rgba(47,184,119,.08)", border: "1px solid rgba(47,184,119,.25)", borderRadius: T.radiusSm, padding: "10px 14px", marginBottom: 14, fontSize: 12.5, color: T.ok, display: "flex", gap: 8 }}>
@@ -1140,9 +1161,12 @@ export default function SplitSinDrama({ user }) {
           })}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 28 }}>
-          <button style={btnGhost} onClick={() => setStep(2)}><ArrowLeft /> Volver a marcar</button>
-          <button style={btnGhost} onClick={() => { setItems([]); setMembers([]); setMarks({}); setImgPreview(null); setScanDone(false); setAiDetected(null); setSalaId(null); savedHistoryRef.current = false; setStep(0); }}>Nueva cuenta</button>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginTop: 28 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <button style={btnGhost} onClick={() => setStep(2)}><ArrowLeft /> Volver a marcar</button>
+            <button style={btnGhost} onClick={() => { setStep(0); setShowPastedEditor(manualReceiptMode); }}><ArrowLeft /> Volver a editar boleta</button>
+          </div>
+          <button style={btnGhost} onClick={() => { setItems([]); setMembers([]); setMarks({}); setImgPreview(null); setScanDone(false); setAiDetected(null); setSalaId(null); setPastedReceipt(""); setManualReceiptMode(false); setShowPastedEditor(false); savedHistoryRef.current = false; setStep(0); }}>Nueva cuenta</button>
         </div>
       </div>
     );

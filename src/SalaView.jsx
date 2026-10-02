@@ -45,7 +45,11 @@ export default function SalaView({ sessionId }) {
         event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}`
       }, payload => {
         setMarks(deserializeMarks(payload.new.marks || {}));
-        setSession(current => current ? { ...current, members: payload.new.members || current.members } : current);
+        setSession(current => current ? {
+          ...current,
+          members: payload.new.members || current.members,
+          items: payload.new.items || current.items,
+        } : current);
       })
       .subscribe();
     channelRef.current = channel;
