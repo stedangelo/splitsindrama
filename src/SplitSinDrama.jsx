@@ -193,6 +193,35 @@ export default function SplitSinDrama({ user }) {
     toastTimer.current = setTimeout(() => setToast({ show: false, msg: "" }), 2200);
   };
 
+  const startNewBill = () => {
+    setStep(0);
+    setItems([]);
+    setMembers([]);
+    setMarks({});
+    setTip(10);
+    setDisc(0);
+    setDiscMode("sin");
+    setNewMember("");
+    setAiLoading(false);
+    setAiDetected(null);
+    setImgPreview(null);
+    setDragOver(false);
+    setScanDone(false);
+    setScanError(false);
+    setScanErrorMessage("");
+    setPastedReceipt("");
+    setPasteError("");
+    setManualReceiptMode(false);
+    setShowPastedEditor(false);
+    setSalaId(null);
+    setShowHistory(false);
+    setShowUserMenu(false);
+    setCopied({});
+    savedHistoryRef.current = false;
+    lastScanRef.current = null;
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
   const usePastedReceipt = () => {
     const parsed = parsePastedReceipt(pastedReceipt);
     if (!parsed.items.length) {
@@ -1191,7 +1220,7 @@ export default function SplitSinDrama({ user }) {
       {/* Topbar */}
       <header style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(10,10,10,.72)", backdropFilter: "saturate(160%) blur(16px)", borderBottom: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: 880, margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px clamp(18px, 4vw, 28px)" }}>
-          <button type="button" aria-label="Volver al inicio" title="Volver al inicio" onClick={() => setStep(0)} style={{ padding: 0, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 19, fontWeight: 800, letterSpacing: "-.045em", color: T.text, whiteSpace: "nowrap" }}>
+          <button type="button" aria-label="Volver al inicio y empezar una cuenta nueva" title="Volver al inicio" onClick={startNewBill} style={{ padding: 0, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 19, fontWeight: 800, letterSpacing: "-.045em", color: T.text, whiteSpace: "nowrap" }}>
             <span style={{ color: T.accentHi }}>split</span>sindrama
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
