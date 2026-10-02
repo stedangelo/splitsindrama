@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "./supabase";
 import heic2any from "heic2any";
+import { parsePastedReceipt } from "./parseReceiptText";
 
 // Parsea el texto OCR de una boleta chilena
 function parseBoleta(text) {
@@ -130,6 +131,8 @@ export default function SplitSinDrama({ user }) {
   const lastScanRef = useRef(null);
   const [scanError, setScanError] = useState(false);
   const [scanErrorMessage, setScanErrorMessage] = useState("");
+  const [pastedReceipt, setPastedReceipt] = useState("");
+  const [pasteError, setPasteError] = useState("");
   const fileRef = useRef();
   let toastTimer = useRef();
 
@@ -182,6 +185,22 @@ export default function SplitSinDrama({ user }) {
     clearTimeout(toastTimer.current);
     setToast({ show: true, msg });
     toastTimer.current = setTimeout(() => setToast({ show: false, msg: "" }), 2200);
+  };
+
+  const usePastedReceipt = () => {
+    const parsed = parsePastedReceipt(pastedReceipt);
+    if (!parsed.items.length) {
+      setPasteError("No encontramos productos con sus precios. Pega el nombre y el precio, cada uno en una línea o juntos en la misma línea.");
+      return;
+    }
+    setItems(parsed.items.map(item => ({ ...item, id: Date.now() + Math.random() })));
+    setScanDone(false);
+    setScanError(false);
+    setScanErrorMessage("");
+    setAiDetected(null);
+    if (parsed.tip !== null) setTip(parsed.tip);
+    setPasteError("");
+    showToast(`${parsed.items.length} productos agregados desde el texto`);
   };
 
   const serializeMarks = (m) => {
@@ -486,11 +505,11 @@ export default function SplitSinDrama({ user }) {
     <div>
       <div style={{ marginBottom: 26 }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", color: T.accentHi, marginBottom: 8 }}>Paso 1 · La cuenta</div>
-        <h2 style={{ fontSize: 27, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 7, color: T.text }}>Sube la boleta</h2>
-        <p style={{ color: T.textDim, fontSize: 15, maxWidth: "54ch" }}>Saca una foto o arrastra la imagen. La IA detecta cada ítem y su precio automáticamente — tú solo revisas.</p>
+        <h2 style={{ fontSize: 27, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 7, color: T.text }}>Sube o pega la boleta</h2>
+        <p style={{ color: T.textDim, fontSize: 15, maxWidth: "54ch" }}>Saca una foto para que la IA detecte los productos, o pega el texto de la boleta si ya lo tienes copiado.</p>
       </div>
 
-      {!imgPreview ? (
+      {!imgPreview && items.length === 0 ? (
         <div
           onClick={() => !limitReached && fileRef.current.click()}
           onDragOver={e => { if (!limitReached) { e.preventDefault(); setDragOver(true); } }}
@@ -549,7 +568,7 @@ export default function SplitSinDrama({ user }) {
             <>
               {scanError && !scanDone ? (
                 <div style={{ background: "rgba(220,60,60,.08)", border: "1px solid rgba(220,60,60,.3)", borderRadius: T.radius, padding: "18px 20px", marginBottom: 18, display: "flex", alignItems: "center", gap: 14 }}>
-                  <img src={imgPreview} alt="Boleta" style={{ width: 46, height: 58, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: `1px solid rgba(220,60,60,.4)` }} />
+                  {imgPreview && <img src={imgPreview} alt="Boleta" style={{ width: 46, height: 58, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: `1px solid rgba(220,60,60,.4)` }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#f87171" }}>No se pudo leer la boleta</div>
                     <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 3, overflowWrap: "anywhere" }}>{scanErrorMessage || "No se pudo procesar la imagen. Intenta de nuevo."}</div>
@@ -565,10 +584,10 @@ export default function SplitSinDrama({ user }) {
                 </div>
               ) : (
               <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: 14, marginBottom: 18, display: "flex", alignItems: "center", gap: 14 }}>
-                <img src={imgPreview} alt="Boleta" style={{ width: 46, height: 58, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: `1px solid ${T.borderStrong}` }} />
+                {imgPreview && <img src={imgPreview} alt="Boleta" style={{ width: 46, height: 58, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: `1px solid ${T.borderStrong}` }} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    Boleta subida
+                    {imgPreview ? "Boleta subida" : "Lista desde texto"}
                     {scanDone && (
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: T.accentHi, background: T.accentSoft, border: `1px solid ${T.borderAccent}`, padding: "3px 9px", borderRadius: 99 }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.6 4.8L18 8.4l-4.4 1.6L12 15l-1.6-5L6 8.4l4.4-1.6L12 2z" fill="currentColor"/></svg>
@@ -576,10 +595,10 @@ export default function SplitSinDrama({ user }) {
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 3 }}>{items.length} ítems detectados</div>
+                  <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 3 }}>{items.length} ítems {imgPreview ? "detectados" : "agregados"}</div>
                 </div>
-                <button onClick={() => { setImgPreview(null); setItems([]); setScanDone(false); setScanError(false); setAiDetected(null); fileRef.current.value = ""; }} style={{ fontSize: 13, color: T.textDim, fontWeight: 500, padding: "8px 13px", borderRadius: 9, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                  Cambiar foto
+                <button onClick={() => { setImgPreview(null); setItems([]); setScanDone(false); setScanError(false); setAiDetected(null); if (fileRef.current) fileRef.current.value = ""; }} style={{ fontSize: 13, color: T.textDim, fontWeight: 500, padding: "8px 13px", borderRadius: 9, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", fontFamily: "inherit" }}>
+                  {imgPreview ? "Cambiar foto" : "Vaciar lista"}
                 </button>
               </div>
               )}
@@ -643,6 +662,25 @@ export default function SplitSinDrama({ user }) {
           )}
         </>
       )}
+
+      <div style={{ marginTop: 22, background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "18px 20px" }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 5 }}>¿No se leyó la boleta? Pega aquí su texto</div>
+        <p style={{ color: T.textDim, fontSize: 12.5, lineHeight: 1.5, marginBottom: 12 }}>Puedes pegar los productos y precios en líneas separadas. También reconoce nombres partidos en varias líneas y omite los totales.</p>
+        <textarea
+          value={pastedReceipt}
+          onChange={e => { setPastedReceipt(e.target.value); if (pasteError) setPasteError(""); }}
+          placeholder={'2 x Coca Cola Zero\n5.800\nCatrina\n6.900\nTOTAL\n12.700'}
+          rows={6}
+          aria-label="Texto copiado de la boleta"
+          style={{ boxSizing: "border-box", width: "100%", resize: "vertical", padding: "12px 14px", borderRadius: T.radiusSm, border: `1px solid ${T.borderStrong}`, background: T.bg, color: T.text, font: "13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace", outlineColor: T.accent }}
+        />
+        {pasteError && <div role="alert" style={{ color: "#f87171", fontSize: 12.5, marginTop: 8 }}>{pasteError}</div>}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+          <button onClick={usePastedReceipt} disabled={!pastedReceipt.trim()} style={{ ...btnPrimary, opacity: pastedReceipt.trim() ? 1 : 0.45, cursor: pastedReceipt.trim() ? "pointer" : "not-allowed" }}>
+            Crear lista desde el texto <ArrowRight />
+          </button>
+        </div>
+      </div>
 
       <label htmlFor="file-upload" style={{ display: "none" }} />
       <input id="file-upload" ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { processFile(e.target.files[0]); e.target.value = ""; }} />
