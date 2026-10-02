@@ -129,6 +129,7 @@ export default function SplitSinDrama({ user }) {
   const savedHistoryRef = useRef(false);
   const lastScanRef = useRef(null);
   const [scanError, setScanError] = useState(false);
+  const [scanErrorMessage, setScanErrorMessage] = useState("");
   const fileRef = useRef();
   let toastTimer = useRef();
 
@@ -262,10 +263,11 @@ export default function SplitSinDrama({ user }) {
     setAiLoading(true);
     setScanDone(false);
     setScanError(false);
+    setScanErrorMessage("");
     lastScanRef.current = { base64, mimeType };
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
+      const timeout = setTimeout(() => controller.abort(), 50000);
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -274,8 +276,12 @@ export default function SplitSinDrama({ user }) {
       }).finally(() => clearTimeout(timeout));
 
       if (!res.ok) {
-        showToast("Error al leer la boleta — intenta de nuevo");
-        setAiLoading(false);
+        const failure = await res.json().catch(() => ({}));
+        const detail = Array.isArray(failure.details) ? failure.details[0] : "";
+        const message = [failure.error || `Error del servidor (${res.status})`, detail].filter(Boolean).join(" · ");
+        setScanError(true);
+        setScanErrorMessage(message);
+        showToast(failure.error || "Error al leer la boleta");
         return;
       }
 
@@ -288,8 +294,10 @@ export default function SplitSinDrama({ user }) {
       try {
         parsed = JSON.parse(clean);
       } catch {
-        showToast("No se pudo leer la boleta — intenta con otra foto");
-        setAiLoading(false);
+        const message = "La IA respondió en un formato que no se pudo interpretar. Puedes reintentar.";
+        setScanError(true);
+        setScanErrorMessage(message);
+        showToast("No se pudo interpretar la respuesta");
         return;
       }
 
@@ -304,13 +312,17 @@ export default function SplitSinDrama({ user }) {
         setScanDone(true);
         showToast(`Boleta lista · ${parsed.items.length} ítems detectados`);
       } else {
-        showToast("No se detectaron ítems — intenta con otra foto");
+        const message = "No se reconocieron productos con precio. Prueba reintentando o subiendo una foto más nítida.";
+        setScanError(true);
+        setScanErrorMessage(message);
+        showToast("No se detectaron ítems");
       }
     } catch (e) {
       console.error(e);
       const msg = e.name === "AbortError" ? "Tiempo de espera agotado — intenta de nuevo" : "Error al procesar — intenta de nuevo";
       showToast(msg);
       setScanError(true);
+      setScanErrorMessage(msg);
     } finally {
       setAiLoading(false);
     }
@@ -540,7 +552,7 @@ export default function SplitSinDrama({ user }) {
                   <img src={imgPreview} alt="Boleta" style={{ width: 46, height: 58, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: `1px solid rgba(220,60,60,.4)` }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#f87171" }}>No se pudo leer la boleta</div>
-                    <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 3 }}>Puede ser timeout o mala calidad. Intenta de nuevo.</div>
+                    <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 3, overflowWrap: "anywhere" }}>{scanErrorMessage || "No se pudo procesar la imagen. Intenta de nuevo."}</div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <button onClick={() => lastScanRef.current && analyzeImage(lastScanRef.current.base64, lastScanRef.current.mimeType)} style={{ fontSize: 13, fontWeight: 600, color: "#fff", padding: "9px 14px", borderRadius: 9, border: "none", background: T.accent, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
