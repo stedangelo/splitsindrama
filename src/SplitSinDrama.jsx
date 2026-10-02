@@ -716,7 +716,7 @@ export default function SplitSinDrama({ user }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 18 }}>
         {[
           { key: "tip", label: "Propina sugerida", desc: "10% es lo habitual en Chile", val: tip, setVal: setTip, presets: [0, 10, 12, 15] },
-          { key: "disc", label: "Descuento", desc: "Cupón, happy hour o promo del local", val: disc, setVal: setDisc, presets: [0, 5, 10, 20] },
+          { key: "disc", label: "Descuento", desc: "Cupón, happy hour o promo del local", val: disc, setVal: setDisc, presets: [0, 10, 20, 40] },
         ].map(f => (
           <div key={f.key} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: 20 }}>
             <label style={{ display: "block", fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>{f.label}</label>
