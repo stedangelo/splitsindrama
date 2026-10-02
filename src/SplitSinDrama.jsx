@@ -675,12 +675,12 @@ export default function SplitSinDrama({ user }) {
       )}
 
       {scanError && items.length === 0 && <div style={{ marginTop: 22, background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "18px 20px" }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 5 }}>¿No se leyó la boleta? Pega aquí su texto</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 5 }}>¿No se leyó la boleta? Pega aquí su texto</div>
         <p style={{ color: T.textDim, fontSize: 12.5, lineHeight: 1.5, marginBottom: 12 }}>Puedes pegar los productos y precios en líneas separadas. También reconoce nombres partidos en varias líneas y omite los totales.</p>
         <textarea
           value={pastedReceipt}
           onChange={e => { setPastedReceipt(e.target.value); if (pasteError) setPasteError(""); }}
-          placeholder={'2 x Coca Cola Zero\n5.800\nCatrina\n6.900\nTOTAL\n12.700'}
+          placeholder="2 x Coca Cola Zero"
           rows={6}
           aria-label="Texto copiado de la boleta"
           style={{ boxSizing: "border-box", width: "100%", resize: "vertical", padding: "12px 14px", borderRadius: T.radiusSm, border: `1px solid ${T.borderStrong}`, background: T.bg, color: T.text, font: "13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace", outlineColor: T.accent }}
