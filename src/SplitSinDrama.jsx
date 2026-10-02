@@ -616,7 +616,7 @@ export default function SplitSinDrama({ user }) {
 
               {scanError && items.length === 0 && <div style={{ margin: "-2px 0 18px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "16px 18px" }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 5 }}>¿No se leyó la boleta? Pega aquí su texto</div>
-                <p style={{ color: T.textDim, fontSize: 12.5, lineHeight: 1.5, marginBottom: 10 }}>Puedes pegar los productos y precios en líneas separadas. También reconoce nombres partidos en varias líneas y omite los totales.</p>
+                <p style={{ color: T.textDim, fontSize: 12.5, lineHeight: 1.5, marginBottom: 10 }}>Pega los productos y precios de la boleta.</p>
                 <textarea
                   value={pastedReceipt}
                   onChange={e => { setPastedReceipt(e.target.value); if (pasteError) setPasteError(""); }}
