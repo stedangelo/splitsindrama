@@ -250,6 +250,7 @@ export default function SplitSinDrama({ user }) {
           event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${salaId}`
         }, payload => {
           setMarks(deserializeMarks(payload.new.marks || {}));
+          if (Array.isArray(payload.new.members)) setMembers(payload.new.members);
         })
         .subscribe();
     }, 800);
@@ -419,6 +420,16 @@ export default function SplitSinDrama({ user }) {
       Object.keys(m).forEach(k => { const s = new Set(m[k]); s.delete(id); m[k] = s; });
       return m;
     });
+  };
+  const renameMember = (id, name) => setMembers(prev => prev.map(m => m.id === id ? { ...m, name } : m));
+  const saveMemberName = (id, index, rawName) => {
+    const name = rawName.trim() || `Persona ${index + 1}`;
+    const next = members.map(m => m.id === id ? { ...m, name } : m);
+    setMembers(next);
+    if (salaId) {
+      supabase.from("sessions").update({ members: next }).eq("id", salaId)
+        .then(({ error }) => { if (error) showToast("No se pudo actualizar el nombre en la sala"); });
+    }
   };
   const toggleMark = (itemId, personId) => {
     setMarks(prev => {
@@ -850,7 +861,15 @@ export default function SplitSinDrama({ user }) {
                     <th key={m.id} style={{ padding: "14px 10px", borderBottom: `1px solid ${T.border}`, background: T.surface2, minWidth: 74, position: "sticky", top: 0, zIndex: 2 }}>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
                         <span style={{ width: 28, height: 28, borderRadius: "50%", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700, color: "#fff", background: pcolor(i) }}>{initials(m.name)}</span>
-                        <span style={{ fontSize: 12.5, fontWeight: 500, color: T.text }}>{m.name}</span>
+                        <input
+                          value={m.name}
+                          onChange={e => renameMember(m.id, e.target.value)}
+                          onBlur={e => saveMemberName(m.id, i, e.target.value)}
+                          maxLength={18}
+                          aria-label={`Nombre de la persona ${i + 1}`}
+                          title="Editar nombre"
+                          style={{ width: 104, maxWidth: "100%", boxSizing: "border-box", padding: "4px 6px", borderRadius: 6, border: `1px solid transparent`, background: "transparent", color: T.text, fontSize: 12.5, fontWeight: 500, fontFamily: "inherit", textAlign: "center", outline: "none" }}
+                        />
                       </div>
                     </th>
                   ))}

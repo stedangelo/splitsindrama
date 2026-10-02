@@ -45,11 +45,12 @@ export default function SalaView({ sessionId }) {
         event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}`
       }, payload => {
         setMarks(deserializeMarks(payload.new.marks || {}));
+        setSession(current => current ? { ...current, members: payload.new.members || current.members } : current);
       })
       .subscribe();
     channelRef.current = channel;
     return () => { supabase.removeChannel(channel); };
-  }, [session, sessionId]);
+  }, [session?.id, sessionId]);
 
   const deserializeMarks = (raw) => {
     const out = {};
