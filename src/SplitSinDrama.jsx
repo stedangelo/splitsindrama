@@ -614,6 +614,25 @@ export default function SplitSinDrama({ user }) {
               </div>
               )}
 
+              {scanError && items.length === 0 && <div style={{ margin: "-2px 0 18px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "16px 18px" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 5 }}>¿No se leyó la boleta? Pega aquí su texto</div>
+                <p style={{ color: T.textDim, fontSize: 12.5, lineHeight: 1.5, marginBottom: 10 }}>Puedes pegar los productos y precios en líneas separadas. También reconoce nombres partidos en varias líneas y omite los totales.</p>
+                <textarea
+                  value={pastedReceipt}
+                  onChange={e => { setPastedReceipt(e.target.value); if (pasteError) setPasteError(""); }}
+                  placeholder="2 x Coca Cola Zero"
+                  rows={3}
+                  aria-label="Texto copiado de la boleta"
+                  style={{ boxSizing: "border-box", width: "100%", maxHeight: 100, resize: "vertical", padding: "10px 12px", borderRadius: T.radiusSm, border: `1px solid ${T.borderStrong}`, background: T.bg, color: T.text, font: "13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace", outlineColor: T.accent }}
+                />
+                {pasteError && <div role="alert" style={{ color: "#f87171", fontSize: 12.5, marginTop: 8 }}>{pasteError}</div>}
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                  <button onClick={usePastedReceipt} disabled={!pastedReceipt.trim()} style={{ ...btnPrimary, opacity: pastedReceipt.trim() ? 1 : 0.45, cursor: pastedReceipt.trim() ? "pointer" : "not-allowed" }}>
+                    Crear lista desde el texto <ArrowRight />
+                  </button>
+                </div>
+              </div>}
+
               {aiDetected && (
                 <div style={{ background: "rgba(47,184,119,.08)", border: "1px solid rgba(47,184,119,.25)", borderRadius: T.radiusSm, padding: "10px 14px", marginBottom: 14, fontSize: 12.5, color: T.ok, display: "flex", gap: 8 }}>
                   <span>🤖</span>
@@ -673,25 +692,6 @@ export default function SplitSinDrama({ user }) {
           )}
         </>
       )}
-
-      {scanError && items.length === 0 && <div style={{ marginTop: 22, background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "18px 20px" }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 5 }}>¿No se leyó la boleta? Pega aquí su texto</div>
-        <p style={{ color: T.textDim, fontSize: 12.5, lineHeight: 1.5, marginBottom: 12 }}>Puedes pegar los productos y precios en líneas separadas. También reconoce nombres partidos en varias líneas y omite los totales.</p>
-        <textarea
-          value={pastedReceipt}
-          onChange={e => { setPastedReceipt(e.target.value); if (pasteError) setPasteError(""); }}
-          placeholder="2 x Coca Cola Zero"
-          rows={6}
-          aria-label="Texto copiado de la boleta"
-          style={{ boxSizing: "border-box", width: "100%", resize: "vertical", padding: "12px 14px", borderRadius: T.radiusSm, border: `1px solid ${T.borderStrong}`, background: T.bg, color: T.text, font: "13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace", outlineColor: T.accent }}
-        />
-        {pasteError && <div role="alert" style={{ color: "#f87171", fontSize: 12.5, marginTop: 8 }}>{pasteError}</div>}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-          <button onClick={usePastedReceipt} disabled={!pastedReceipt.trim()} style={{ ...btnPrimary, opacity: pastedReceipt.trim() ? 1 : 0.45, cursor: pastedReceipt.trim() ? "pointer" : "not-allowed" }}>
-            Crear lista desde el texto <ArrowRight />
-          </button>
-        </div>
-      </div>}
 
       <label htmlFor="file-upload" style={{ display: "none" }} />
       <input id="file-upload" ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { processFile(e.target.files[0]); e.target.value = ""; }} />
