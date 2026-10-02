@@ -448,8 +448,19 @@ export default function SplitSinDrama({ user }) {
   const copyAll = () => {
     const per = getPerPerson();
     let msg = `🧾 *La cuenta — Split Sin Drama*\nTotal: ${fmtCLP(grand)}\n\n`;
-    members.forEach(m => { msg += `${m.name}: ${fmtCLP(per[m.id].final)}\n`; });
-    msg += `\nIncluye propina ${tip}%${disc > 0 ? ` · descuento ${disc}%` : ""} 🙌`;
+    members.forEach(m => {
+      const person = per[m.id];
+      const total = Math.round(person.base);
+      const discount = Math.round(person.base * disc / 100);
+      const final = Math.round(person.final);
+      const personTip = final - total + discount;
+      msg += `*${m.name}*\n`;
+      msg += `Total: ${fmtCLP(total)}\n`;
+      msg += `Descuento (${disc}%): −${fmtCLP(discount)}\n`;
+      msg += `Propina (${tip}%): +${fmtCLP(personTip)}\n`;
+      msg += `*Total con propina: ${fmtCLP(final)}*\n\n`;
+    });
+    msg += "🙌";
     navigator.clipboard.writeText(msg).then(() => showToast("Resumen del grupo copiado"));
   };
 
