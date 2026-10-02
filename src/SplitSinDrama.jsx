@@ -1125,7 +1125,7 @@ export default function SplitSinDrama({ user }) {
       <header style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(10,10,10,.72)", backdropFilter: "saturate(160%) blur(16px)", borderBottom: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: 880, margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px clamp(18px, 4vw, 28px)" }}>
           <div aria-label="splitsindrama" style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.045em", color: T.text, whiteSpace: "nowrap" }}>
-            split<span style={{ color: T.accentHi }}>sin</span>drama
+            <span style={{ color: T.accentHi }}>split</span>sindrama
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
             <button onClick={() => setShowHistory(true)} title="Ver historial" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: T.textDim, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: "6px 11px", cursor: "pointer", fontFamily: "inherit" }}>
