@@ -712,7 +712,20 @@ export default function SplitSinDrama({ user }) {
             <div style={{ fontSize: 12.5, color: T.textFaint, marginBottom: 16 }}>{f.desc}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <button onClick={() => f.setVal(Math.max(0, f.val - 1))} style={{ width: 38, height: 38, borderRadius: 10, display: "grid", placeItems: "center", background: T.surface2, border: `1px solid ${T.border}`, color: T.textDim, fontSize: 18, cursor: "pointer", flexShrink: 0 }}>−</button>
-              <div style={{ flex: 1, textAlign: "center", fontFamily: "monospace", fontSize: 24, fontWeight: 600, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 10, padding: 7 }}>{f.val}%</div>
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 3, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 10, padding: 7 }}>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  inputMode="numeric"
+                  aria-label={`${f.label} en porcentaje`}
+                  value={f.val}
+                  onChange={e => f.setVal(e.target.value === "" ? 0 : Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                  style={{ width: "100%", minWidth: 0, textAlign: "right", fontFamily: "monospace", fontSize: 24, fontWeight: 600, background: "none", border: "none", color: T.text, outline: "none", padding: 0 }}
+                />
+                <span style={{ fontFamily: "monospace", fontSize: 24, fontWeight: 600, color: T.text }}>%</span>
+              </div>
               <button onClick={() => f.setVal(Math.min(100, f.val + 1))} style={{ width: 38, height: 38, borderRadius: 10, display: "grid", placeItems: "center", background: T.surface2, border: `1px solid ${T.border}`, color: T.textDim, fontSize: 18, cursor: "pointer", flexShrink: 0 }}>+</button>
             </div>
             <div style={{ display: "flex", gap: 7, marginTop: 12 }}>
