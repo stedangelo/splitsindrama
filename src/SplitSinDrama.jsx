@@ -663,7 +663,7 @@ export default function SplitSinDrama({ user }) {
         </>
       )}
 
-      <div style={{ marginTop: 22, background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "18px 20px" }}>
+      {scanError && items.length === 0 && <div style={{ marginTop: 22, background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius, padding: "18px 20px" }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 5 }}>¿No se leyó la boleta? Pega aquí su texto</div>
         <p style={{ color: T.textDim, fontSize: 12.5, lineHeight: 1.5, marginBottom: 12 }}>Puedes pegar los productos y precios en líneas separadas. También reconoce nombres partidos en varias líneas y omite los totales.</p>
         <textarea
@@ -680,7 +680,7 @@ export default function SplitSinDrama({ user }) {
             Crear lista desde el texto <ArrowRight />
           </button>
         </div>
-      </div>
+      </div>}
 
       <label htmlFor="file-upload" style={{ display: "none" }} />
       <input id="file-upload" ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { processFile(e.target.files[0]); e.target.value = ""; }} />
