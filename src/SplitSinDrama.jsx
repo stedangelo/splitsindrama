@@ -464,6 +464,30 @@ export default function SplitSinDrama({ user }) {
     navigator.clipboard.writeText(msg).then(() => showToast("Resumen del grupo copiado"));
   };
 
+  const copyAllDetail = () => {
+    const per = getPerPerson();
+    let msg = `🧾 *La cuenta — Split Sin Drama*\nTotal general: ${fmtCLP(grand)}\n\n`;
+    members.forEach(m => {
+      const person = per[m.id];
+      const myItems = items.filter(it => marks[it.id]?.has(m.id));
+      const total = Math.round(person.base);
+      const discount = Math.round(person.base * disc / 100);
+      const final = Math.round(person.final);
+      const personTip = final - total + discount;
+      msg += `*${m.name}*\n${myItems.length} ítem${myItems.length !== 1 ? "s" : ""}\n*${fmtCLP(final)}*\n`;
+      myItems.forEach(it => {
+        const markedBy = marks[it.id].size;
+        const share = it.price / markedBy;
+        msg += `${it.name}${markedBy > 1 ? ` ÷${markedBy}` : ""} ${fmtCLP(share)}\n`;
+      });
+      msg += `Total ${fmtCLP(total)}\n`;
+      msg += `Descuento (${disc}%) −${fmtCLP(discount)}\n`;
+      msg += `Propina (${tip}%) +${fmtCLP(personTip)}\n`;
+      msg += `*Total con propina ${fmtCLP(final)}*\n\n`;
+    });
+    navigator.clipboard.writeText(msg).then(() => showToast("Detalle completo copiado"));
+  };
+
   const copyPerson = (m) => {
     const per = getPerPerson();
     const myItems = items.filter(it => marks[it.id]?.has(m.id));
@@ -1046,10 +1070,16 @@ export default function SplitSinDrama({ user }) {
             <div style={{ fontSize: 13.5, color: T.textDim }}>Total repartido entre {members.length} personas</div>
             <div style={{ fontFamily: "monospace", fontSize: 26, fontWeight: 700 }}>{fmtCLP(grand)}</div>
           </div>
-          <button onClick={copyAll} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, padding: "11px 18px", borderRadius: T.radiusSm, background: "#25D366", color: "#062b14", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Copiar todo para el grupo
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <button onClick={copyAll} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, padding: "11px 18px", borderRadius: T.radiusSm, background: "#25D366", color: "#062b14", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Copiar todo para el grupo
+            </button>
+            <button onClick={copyAllDetail} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, padding: "11px 18px", borderRadius: T.radiusSm, background: T.surface2, color: T.text, border: `1px solid ${T.borderStrong}`, cursor: "pointer", fontFamily: "inherit" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8 5h12M8 10h12M8 15h12M4 5h.01M4 10h.01M4 15h.01M4 20h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Copiar todo el detalle
+            </button>
+          </div>
         </div>
 
         {/* Cards */}
