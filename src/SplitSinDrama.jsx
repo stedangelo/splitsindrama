@@ -277,7 +277,7 @@ export default function SplitSinDrama({ user }) {
 
       if (!res.ok) {
         const failure = await res.json().catch(() => ({}));
-        const detail = Array.isArray(failure.details) ? failure.details[0] : "";
+        const detail = Array.isArray(failure.details) ? failure.details.join(" · ") : "";
         const message = [failure.error || `Error del servidor (${res.status})`, detail].filter(Boolean).join(" · ");
         setScanError(true);
         setScanErrorMessage(message);
