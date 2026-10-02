@@ -517,7 +517,7 @@ export default function SplitSinDrama({ user }) {
       <div style={{ marginBottom: 26 }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", color: T.accentHi, marginBottom: 8 }}>Paso 1 · La cuenta</div>
         <h2 style={{ fontSize: 27, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 7, color: T.text }}>Sube o pega la boleta</h2>
-        <p style={{ color: T.textDim, fontSize: 15, maxWidth: "54ch" }}>Saca una foto para que la IA detecte los productos, o pega el texto de la boleta si ya lo tienes copiado.</p>
+        <p style={{ color: T.textDim, fontSize: 15, maxWidth: "54ch" }}>Saca una foto para que la IA detecte los productos</p>
       </div>
 
       {!imgPreview && items.length === 0 ? (
