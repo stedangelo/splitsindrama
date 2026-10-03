@@ -1,4 +1,7 @@
 const MODELS = [
+  // Add currently available free vision providers ahead of the unstable routes.
+  "dots-studio/dots-3-note-preview:free",
+  "thinkingmachines/inkling-small:free",
   "qwen/qwen3.8-27b:free",
   "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   "google/gemma-4-31b-it:free",

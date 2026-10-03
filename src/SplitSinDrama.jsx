@@ -131,6 +131,7 @@ export default function SplitSinDrama({ user }) {
   const lastScanRef = useRef(null);
   const [scanError, setScanError] = useState(false);
   const [scanErrorMessage, setScanErrorMessage] = useState("");
+  const [showScanErrorDetails, setShowScanErrorDetails] = useState(false);
   const [pastedReceipt, setPastedReceipt] = useState("");
   const [pasteError, setPasteError] = useState("");
   const [manualReceiptMode, setManualReceiptMode] = useState(false);
@@ -209,6 +210,7 @@ export default function SplitSinDrama({ user }) {
     setScanDone(false);
     setScanError(false);
     setScanErrorMessage("");
+    setShowScanErrorDetails(false);
     setPastedReceipt("");
     setPasteError("");
     setManualReceiptMode(false);
@@ -329,6 +331,7 @@ export default function SplitSinDrama({ user }) {
     setScanDone(false);
     setScanError(false);
     setScanErrorMessage("");
+    setShowScanErrorDetails(false);
     lastScanRef.current = { base64, mimeType };
     try {
       const controller = new AbortController();
@@ -663,7 +666,20 @@ export default function SplitSinDrama({ user }) {
                   {imgPreview && <img src={imgPreview} alt="Boleta" style={{ width: 46, height: 58, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: `1px solid rgba(220,60,60,.4)` }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#f87171" }}>No se pudo leer la boleta</div>
-                    <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 3, overflowWrap: "anywhere" }}>{scanErrorMessage || "No se pudo procesar la imagen. Intenta de nuevo."}</div>
+                    <div style={{ fontSize: 12.5, color: T.textDim, marginTop: 3 }}>Intenta nuevamente o cambia la foto.</div>
+                    <button
+                      type="button"
+                      aria-expanded={showScanErrorDetails}
+                      onClick={() => setShowScanErrorDetails(show => !show)}
+                      style={{ marginTop: 6, padding: 0, border: 0, background: "none", color: T.accentHi, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                    >
+                      {showScanErrorDetails ? "Ocultar detalles" : "Ver detalles"}
+                    </button>
+                    {showScanErrorDetails && (
+                      <div style={{ marginTop: 7, maxHeight: 140, overflowY: "auto", overflowWrap: "anywhere", color: T.textFaint, fontSize: 11.5, lineHeight: 1.45 }}>
+                        {scanErrorMessage || "No hay más detalles disponibles."}
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <button onClick={() => lastScanRef.current && analyzeImage(lastScanRef.current.base64, lastScanRef.current.mimeType)} style={{ fontSize: 13, fontWeight: 600, color: "#fff", padding: "9px 14px", borderRadius: 9, border: "none", background: T.accent, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
@@ -952,10 +968,17 @@ export default function SplitSinDrama({ user }) {
                         <input
                           value={m.name}
                           onChange={e => renameMember(m.id, e.target.value)}
+                          onFocus={e => {
+                            if (/^Persona \d+$/i.test(m.name)) {
+                              renameMember(m.id, "");
+                              e.target.select();
+                            }
+                          }}
                           onBlur={e => saveMemberName(m.id, i, e.target.value)}
                           maxLength={18}
                           aria-label={`Nombre de la persona ${i + 1}`}
                           title="Editar nombre"
+                          placeholder="Nombre"
                           style={{ width: 104, maxWidth: "100%", boxSizing: "border-box", padding: "4px 6px", borderRadius: 6, border: `1px solid transparent`, background: "transparent", color: T.text, fontSize: 12.5, fontWeight: 500, fontFamily: "inherit", textAlign: "center", outline: "none" }}
                         />
                       </div>
@@ -1224,13 +1247,12 @@ export default function SplitSinDrama({ user }) {
             <span style={{ color: T.accentHi }}>split</span>sindrama
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <button onClick={() => setShowHistory(true)} title="Ver historial" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: T.textDim, background: T.surface2, border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: "6px 11px", cursor: "pointer", fontFamily: "inherit" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              Historial
-            </button>
             <div style={{ position: "relative" }}>
               <button
                 onClick={() => setShowUserMenu(p => !p)}
+                aria-label="Abrir menú de perfil"
+                aria-haspopup="menu"
+                aria-expanded={showUserMenu}
                 style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", cursor: "pointer", padding: "4px 2px", borderRadius: 8 }}
               >
                 <span style={{ fontSize: 13.5, fontWeight: 500, color: T.textDim }}>{userName}</span>
@@ -1246,6 +1268,13 @@ export default function SplitSinDrama({ user }) {
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text }}>{userName}</div>
                       <div style={{ fontSize: 11.5, color: T.textFaint, marginTop: 2 }}>{user.email}</div>
                     </div>
+                    <button
+                      onClick={() => { setShowUserMenu(false); setShowHistory(true); }}
+                      style={{ width: "100%", textAlign: "left", padding: "11px 16px", background: "none", border: "none", color: T.textDim, fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Historial
+                    </button>
                     <button
                       onClick={() => { setShowUserMenu(false); supabase.auth.signOut(); }}
                       style={{ width: "100%", textAlign: "left", padding: "11px 16px", background: "none", border: "none", color: "#f87171", fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}
